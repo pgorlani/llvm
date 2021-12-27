@@ -2198,6 +2198,8 @@ TARGET_BUILTIN(__nvvm_cp_async_commit_group, "v", "", AND(SM_80,PTX70))
 TARGET_BUILTIN(__nvvm_cp_async_wait_group, "vIi", "", AND(SM_80,PTX70))
 TARGET_BUILTIN(__nvvm_cp_async_wait_all, "v", "", AND(SM_80,PTX70))
 
+BUILTIN(__nvvm_tanh_approx_f, "ff", "")
+
 #undef BUILTIN
 #undef TARGET_BUILTIN
 #pragma pop_macro("AND")

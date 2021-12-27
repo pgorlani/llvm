@@ -6223,6 +6223,9 @@ class WMMA_REGINFO<WMMA_REGS r, string op>
   dag Ins = !dag(ins, ptx_regs, reg_names);
 }
 
+def INT_NVVM_TANH_APPROX_F : F_MATH_1<"tanh.approx.f32 \t$dst, $src0;",Float32Regs, Float32Regs, int_nvvm_tanh_approx_f>;
+
+
 // Convert dag of arguments into a dag to match given intrinsic.
 class BuildPatternI<Intrinsic Intr, dag Ins> {
   // Build a dag pattern that matches the intrinsic call.
