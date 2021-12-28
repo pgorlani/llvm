@@ -11,9 +11,10 @@
 #include <clcmacro.h>
 
 int __clc_nvvm_reflect_arch();
+int __clc_nvvm_reflect_approx_tanh();
 
 float __my_tanhf (float x){
-  if(__clc_nvvm_reflect_arch() >= 750) {
+  if(__clc_nvvm_reflect_approx_tanh()) {
     return __nvvm_tanh_approx_f(x); // intrinsics
   } else {
     return __nv_tanhf(x);  // libdevice implementation

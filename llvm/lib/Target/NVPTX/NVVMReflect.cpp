@@ -170,6 +170,11 @@ static bool runNVVMReflect(Function &F, unsigned SmVersion) {
         ReflectVal = Flag->getSExtValue();
     } else if (ReflectArg == "__CUDA_ARCH") {
       ReflectVal = SmVersion * 10;
+    } else if (ReflectArg == "__CUDA_APPROX_TANH") {
+      // Try to pull __CUDA_APPROX_TANH from the nvvm-reflect-approx-tanh module flag.
+      if (auto *Flag = mdconst::extract_or_null<ConstantInt>(
+              F.getParent()->getModuleFlag("nvvm-reflect-approx-tanh")))
+        ReflectVal = Flag->getSExtValue();
     }
     Call->replaceAllUsesWith(ConstantInt::get(Call->getType(), ReflectVal));
     ToRemove.push_back(Call);
