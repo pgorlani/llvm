@@ -1163,13 +1163,13 @@ pi_result cuda_piDeviceGetInfo(pi_device device, pi_device_info param_name,
   case PI_DEVICE_INFO_IMAGE_SUPPORT: {
 
     pi_bool image_support;
-
-#if defined(PI_CUDA_ENABLE_IMAGE_SUPPORT)
-    image_support = PI_TRUE;
-#else
-    cl::sycl::detail::pi::cuPrint("you can enable Image suuooooo bla bla ");
-    image_support = PI_FALSE;
-#endif
+  
+    if (std::getenv("PI_CUDA_ENABLE_IMAGE_SUPPORT") != nullptr) {
+      image_support = PI_TRUE;
+    }else{
+      cl::sycl::detail::pi::cuPrint("you can enable Image suuooooo bla bla ");
+      image_support = PI_FALSE;
+    }
 
     return getInfo(param_value_size, param_value, param_value_size_ret, image_support);
   }
