@@ -1161,8 +1161,17 @@ pi_result cuda_piDeviceGetInfo(pi_device device, pi_device_info param_name,
                    pi_uint64{max_alloc});
   }
   case PI_DEVICE_INFO_IMAGE_SUPPORT: {
-    return getInfo(param_value_size, param_value, param_value_size_ret,
-                   PI_TRUE);
+
+    pi_bool image_support;
+
+#if defined(PI_CUDA_ENABLE_IMAGE_SUPPORT)
+    image_support = PI_TRUE;
+#else
+    cl::sycl::detail::pi::cuPrint("you can enable Image suuooooo bla bla ");
+    image_support = PI_FALSE;
+#endif
+
+    return getInfo(param_value_size, param_value, param_value_size_ret, image_support);
   }
   case PI_DEVICE_INFO_MAX_READ_IMAGE_ARGS: {
     // This call doesn't match to CUDA as it doesn't have images, but instead
