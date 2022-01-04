@@ -75,8 +75,11 @@ public:
   /// address space.
   bool NVPTXUseShortPointers = false;
 
+  /// \brief If enabled, use precise square root
+  bool NVVMCudaPrecSqrt = false;
+
   /// \brief If enabled, use approximate tanh
-  bool NVVMCudaApproxTanh = false;
+  bool NVVMCudaApproxTanhf = false;
 
   /// \brief If enabled, allow AMDGPU unsafe floating point atomics.
   bool AllowAMDGPUUnsafeFPAtomics = false;
