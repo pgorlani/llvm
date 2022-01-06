@@ -780,9 +780,10 @@ void CodeGenModule::Release() {
                                   llvm::DenormalMode::IEEE);
     getModule().addModuleFlag(llvm::Module::Override, "nvvm-reflect-prec-sqrt",
                               getTarget().getTargetOpts().NVVMCudaPrecSqrt);
-    getModule().addModuleFlag(llvm::Module::Override, "nvvm-reflect-approx-tanhf",
+    getModule().addModuleFlag(llvm::Module::Override,
+                              "nvvm-reflect-approx-tanhf",
                               getTarget().getTargetOpts().NVVMCudaApproxTanhf);
-   }
+  }
 
   if (LangOpts.EHAsynch)
     getModule().addModuleFlag(llvm::Module::Warning, "eh-asynch", 1);
