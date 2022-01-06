@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 -fcuda-is-device -triple nvptx64-nvidia-cuda -emit-llvm  -fnvvm-cuda-approx-tanhf %s -o -| FileCheck --check-prefix=CHECK-ON %s
+// RUN: %clang_cc1 -fcuda-is-device -triple nvptx64-nvidia-cuda -emit-llvm  -fcuda-approx-tanhf %s -o -| FileCheck --check-prefix=CHECK-ON %s
 // RUN: %clang_cc1 -fcuda-is-device -triple nvptx64-nvidia-cuda -emit-llvm %s -o -| FileCheck --check-prefix=CHECK-OFF %s
 
 #include "Inputs/cuda.h"
 
-// Check that the -fnvvm-cuda-approx-tanhf flag correctly sets the nvvm-reflect module flags.
+// Check that the -fcuda-approx-tanhf flag correctly sets the nvvm-reflect module flags.
 
 extern "C" __device__ void foo() {}
 

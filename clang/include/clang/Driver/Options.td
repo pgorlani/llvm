@@ -985,7 +985,7 @@ defm cuda_prec_sqrt : BoolFOption<"cuda-prec-sqrt",
   PosFlag<SetTrue, [CC1Option], "Specify">,
   NegFlag<SetFalse, [], "Don't specify">,
   BothFlags<[], " that sqrt is correctly rounded (for CUDA devices)">>;
-defm nvvm_cuda_approx_tanhf : BoolFOption<"nvvm-cuda-approx-tanhf",
+defm nvvm_cuda_approx_tanhf : BoolFOption<"cuda-approx-tanhf",
   TargetOpts<"NVVMCudaApproxTanhf">, DefaultFalse,
   PosFlag<SetTrue, [CC1Option], "Use the built-in fast approximation of tanhf function. Device needs to have a compute capability >= 7.5">,
   NegFlag<SetFalse>>;
