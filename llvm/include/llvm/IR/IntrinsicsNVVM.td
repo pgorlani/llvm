@@ -809,6 +809,13 @@ let TargetPrefix = "nvvm" in {
       DefaultAttrsIntrinsic<[llvm_float_ty], [llvm_float_ty], [IntrNoMem]>;
 
 //
+// Tanh
+//
+
+  def int_nvvm_tanh_approx_f : GCCBuiltin<"__nvvm_tanh_approx_f">,
+       DefaultAttrsIntrinsic<[llvm_float_ty], [llvm_float_ty], [IntrNoMem]>;
+
+//
 // Fma
 //
 
@@ -4521,10 +4528,6 @@ def int_nvvm_redux_sync_xor : GCCBuiltin<"__nvvm_redux_sync_xor">,
 def int_nvvm_redux_sync_or : GCCBuiltin<"__nvvm_redux_sync_or">,
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
             [IntrConvergent, IntrInaccessibleMemOnly]>;
-
-
-def int_nvvm_tanh_approx_f : GCCBuiltin<"__nvvm_tanh_approx_f">, DefaultAttrsIntrinsic<[llvm_float_ty], [llvm_float_ty], [IntrNoMem]>;
-
 
 //
 // WMMA instructions

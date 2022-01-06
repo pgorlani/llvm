@@ -13,4 +13,3 @@ define i32 @__clc_nvvm_reflect_approx_tanh() alwaysinline {
   %reflect = call i32 @__nvvm_reflect(i8* addrspacecast (i8 addrspace(1)* getelementptr inbounds ([20 x i8], [20 x i8] addrspace(1)* @str_approx_tanh, i32 0, i32 0) to i8*))
   ret i32 %reflect
 }
-

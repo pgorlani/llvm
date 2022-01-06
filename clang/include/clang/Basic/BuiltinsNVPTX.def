@@ -218,6 +218,10 @@ BUILTIN(__nvvm_sin_approx_f, "ff", "")
 BUILTIN(__nvvm_cos_approx_ftz_f, "ff", "")
 BUILTIN(__nvvm_cos_approx_f, "ff", "")
 
+// Tanh
+
+TARGET_BUILTIN(__nvvm_tanh_approx_f, "ff", "", AND(SM_75,PTX70))
+
 // Fma
 
 BUILTIN(__nvvm_fma_rn_ftz_f, "ffff", "")
@@ -2197,10 +2201,6 @@ TARGET_BUILTIN(__nvvm_cp_async_cg_shared_global_16, "vv*3vC*1", "", AND(SM_80,PT
 TARGET_BUILTIN(__nvvm_cp_async_commit_group, "v", "", AND(SM_80,PTX70))
 TARGET_BUILTIN(__nvvm_cp_async_wait_group, "vIi", "", AND(SM_80,PTX70))
 TARGET_BUILTIN(__nvvm_cp_async_wait_all, "v", "", AND(SM_80,PTX70))
-
-// Tanh Approx 
-//BUILTIN(__nvvm_tanh_approx_f, "ff", "")
-TARGET_BUILTIN(__nvvm_tanh_approx_f, "ff", "", AND(SM_75,PTX70))
 
 #undef BUILTIN
 #undef TARGET_BUILTIN
