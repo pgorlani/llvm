@@ -5,6 +5,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+#include<iostream>
+#define pri(command) std::cerr<<#command<<" "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<std::endl; command ;
+#define pri2(command) std::cerr<<#command<<" "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<std::endl;
 #include "clang/Driver/Driver.h"
 #include "ToolChains/AIX.h"
 #include "ToolChains/AMDGPU.h"
@@ -1579,10 +1582,10 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 
   // Construct the list of abstract actions to perform for this compilation. On
   // MachO targets this uses the driver-driver and universal actions.
-  if (TC.getTriple().isOSBinFormatMachO())
-    BuildUniversalActions(*C, C->getDefaultToolChain(), Inputs);
-  else
-    BuildActions(*C, C->getArgs(), Inputs, C->getActions());
+  if (TC.getTriple().isOSBinFormatMachO()){ std::cerr<<"\t"<<__FILE__<<" "<<__LINE__<<" "<<__func__<<" call BuildUniversalAction function"<<std::endl;
+    BuildUniversalActions(*C, C->getDefaultToolChain(), Inputs);}
+  else{ std::cerr<<"\t ----- \t"<<__FILE__<<" "<<__LINE__<<" "<<__func__<<" call BuildAction function"<<std::endl;
+    BuildActions(*C, C->getArgs(), Inputs, C->getActions());}
 
   if (CCCPrintPhases) {
     PrintActions(*C);
@@ -2550,14 +2553,14 @@ void Driver::BuildUniversalActions(Compilation &C, const ToolChain &TC,
 
     ActionList Inputs;
     for (unsigned i = 0, e = Archs.size(); i != e; ++i)
-      Inputs.push_back(C.MakeAction<BindArchAction>(Act, Archs[i]));
+      {pri(Inputs.push_back(C.MakeAction<BindArchAction>(Act, Archs[i])))};
 
     // Lipo if necessary, we do it this way because we need to set the arch flag
     // so that -Xarch_ gets overwritten.
     if (Inputs.size() == 1 || Act->getType() == types::TY_Nothing)
       Actions.append(Inputs.begin(), Inputs.end());
     else
-      Actions.push_back(C.MakeAction<LipoJobAction>(Inputs, Act->getType()));
+      {pri(Actions.push_back(C.MakeAction<LipoJobAction>(Inputs, Act->getType())));}
 
     // Handle debug info queries.
     Arg *A = Args.getLastArg(options::OPT_g_Group);
@@ -2574,16 +2577,16 @@ void Driver::BuildUniversalActions(Compilation &C, const ToolChain &TC,
         ActionList Inputs;
         Inputs.push_back(Actions.back());
         Actions.pop_back();
-        Actions.push_back(
-            C.MakeAction<DsymutilJobAction>(Inputs, types::TY_dSYM));
+        pri(Actions.push_back(
+            C.MakeAction<DsymutilJobAction>(Inputs, types::TY_dSYM)));
       }
 
       // Verify the debug info output.
       if (Args.hasArg(options::OPT_verify_debug_info)) {
         Action* LastAction = Actions.back();
         Actions.pop_back();
-        Actions.push_back(C.MakeAction<VerifyDebugInfoJobAction>(
-            LastAction, types::TY_Nothing));
+        pri(Actions.push_back(C.MakeAction<VerifyDebugInfoJobAction>(
+            LastAction, types::TY_Nothing)));
       }
     }
   }
@@ -3268,7 +3271,7 @@ class OffloadingActionBuilder final {
 
   /// Builder interface. It doesn't build anything or keep any state.
   class DeviceActionBuilder {
-  public:
+    public:
     typedef const llvm::SmallVectorImpl<phases::ID> PhasesTy;
 
     enum ActionBuilderReturnCode {
@@ -3466,8 +3469,9 @@ class OffloadingActionBuilder final {
         IA->setId(CUID);
 
         for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
-          CudaDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), Ty, IA->getId()));
+          pri(CudaDeviceActions.push_back(
+              C.MakeAction<InputAction>(IA->getInputArg(), Ty, IA->getId())));
+      std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
         }
 
         return ABRT_Success;
@@ -3482,6 +3486,7 @@ class OffloadingActionBuilder final {
           return ABRT_Inactive;
 
         CudaDeviceActions.clear();
+      std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
         if (auto *IA = dyn_cast<InputAction>(UA->getInputs().back())) {
           std::string FileName = IA->getInputArg().getAsString(Args);
           // Check if the type of the file is the same as the action. Do not
@@ -3499,6 +3504,7 @@ class OffloadingActionBuilder final {
           CudaDeviceActions.push_back(UA);
           UA->registerDependentActionInfo(ToolChains[0], Arch,
                                           AssociatedOffloadKind);
+      std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
         }
         IsActive = true;
         return ABRT_Success;
@@ -3512,17 +3518,19 @@ class OffloadingActionBuilder final {
       auto AddTopLevel = [&](Action *A, TargetID TargetID) {
         OffloadAction::DeviceDependences Dep;
         Dep.add(*A, *ToolChains.front(), TargetID, AssociatedOffloadKind);
-        AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+        pri(AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType())));
       };
 
       // If we have a fat binary, add it to the list.
       if (CudaFatBinary) {
         AddTopLevel(CudaFatBinary, CudaArch::UNUSED);
         CudaDeviceActions.clear();
+      std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
         CudaFatBinary = nullptr;
         return;
       }
 
+      std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
       if (CudaDeviceActions.empty())
         return;
 
@@ -3535,6 +3543,7 @@ class OffloadingActionBuilder final {
              "Expecting to have a single CUDA toolchain.");
       for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I)
         AddTopLevel(CudaDeviceActions[I], GpuArchList[I]);
+
 
       CudaDeviceActions.clear();
     }
@@ -3702,6 +3711,7 @@ class OffloadingActionBuilder final {
 
       // If we don't have more CUDA actions, we don't have any dependences to
       // create for the host.
+      std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
       if (CudaDeviceActions.empty())
         return ABRT_Success;
 
@@ -3753,15 +3763,15 @@ class OffloadingActionBuilder final {
           for (auto &A : {AssembleAction, BackendAction}) {
             OffloadAction::DeviceDependences DDep;
             DDep.add(*A, *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
-            DeviceActions.push_back(
-                C.MakeAction<OffloadAction>(DDep, A->getType()));
+            pri(DeviceActions.push_back(
+                C.MakeAction<OffloadAction>(DDep, A->getType())));
           }
         }
 
         // We generate the fat binary if we have device input actions.
         if (!DeviceActions.empty()) {
-          CudaFatBinary =
-              C.MakeAction<LinkJobAction>(DeviceActions, types::TY_CUDA_FATBIN);
+          pri(CudaFatBinary =
+              C.MakeAction<LinkJobAction>(DeviceActions, types::TY_CUDA_FATBIN));
 
           if (!CompileDeviceOnly) {
             DA.add(*CudaFatBinary, *ToolChains.front(), /*BoundArch=*/nullptr,
@@ -3878,8 +3888,8 @@ class OffloadingActionBuilder final {
             AL.push_back(CudaDeviceActions[I]);
             // Create a link action to link device IR with device library
             // and generate ISA.
-            CudaDeviceActions[I] =
-                C.MakeAction<LinkJobAction>(AL, types::TY_Image);
+            pri(CudaDeviceActions[I] =
+                C.MakeAction<LinkJobAction>(AL, types::TY_Image));
           } else {
             // When LTO is not enabled, we follow the conventional
             // compiler phases, including backend and assemble phases.
@@ -3891,8 +3901,8 @@ class OffloadingActionBuilder final {
               types::ID Output = Args.hasArg(options::OPT_S)
                                      ? types::TY_LLVM_IR
                                      : types::TY_LLVM_BC;
-              BackendAction =
-                  C.MakeAction<BackendJobAction>(CudaDeviceActions[I], Output);
+              pri(BackendAction =
+                  C.MakeAction<BackendJobAction>(CudaDeviceActions[I], Output));
             } else
               BackendAction = C.getDriver().ConstructPhaseAction(
                   C, Args, phases::Backend, CudaDeviceActions[I],
@@ -3903,8 +3913,8 @@ class OffloadingActionBuilder final {
             AL.push_back(AssembleAction);
             // Create a link action to link device IR with device library
             // and generate ISA.
-            CudaDeviceActions[I] =
-                C.MakeAction<LinkJobAction>(AL, types::TY_Image);
+            pri(CudaDeviceActions[I] =
+                C.MakeAction<LinkJobAction>(AL, types::TY_Image));
           }
 
           // OffloadingActionBuilder propagates device arch until an offload
@@ -3916,15 +3926,15 @@ class OffloadingActionBuilder final {
           OffloadAction::DeviceDependences DDep;
           DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I],
                    AssociatedOffloadKind);
-          CudaDeviceActions[I] = C.MakeAction<OffloadAction>(
-              DDep, CudaDeviceActions[I]->getType());
+          pri(CudaDeviceActions[I] = C.MakeAction<OffloadAction>(
+              DDep, CudaDeviceActions[I]->getType()));
         }
 
         if (!CompileDeviceOnly || !BundleOutput.hasValue() ||
             BundleOutput.getValue()) {
           // Create HIP fat binary with a special "link" action.
-          CudaFatBinary = C.MakeAction<LinkJobAction>(CudaDeviceActions,
-                                                      types::TY_HIP_FATBIN);
+          pri(CudaFatBinary = C.MakeAction<LinkJobAction>(CudaDeviceActions,
+                                                      types::TY_HIP_FATBIN));
 
           if (!CompileDeviceOnly) {
             DA.add(*CudaFatBinary, *ToolChains.front(), /*BoundArch=*/nullptr,
@@ -3970,11 +3980,11 @@ class OffloadingActionBuilder final {
           OffloadAction::DeviceDependences DDep;
           DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I],
                    AssociatedOffloadKind);
-          CudaDeviceActions[I] = C.MakeAction<OffloadAction>(
-              DDep, CudaDeviceActions[I]->getType());
+          pri(CudaDeviceActions[I] = C.MakeAction<OffloadAction>(
+              DDep, CudaDeviceActions[I]->getType()));
         }
-        CudaFatBinary =
-            C.MakeAction<OffloadBundlingJobAction>(CudaDeviceActions);
+        pri(CudaFatBinary =
+            C.MakeAction<OffloadBundlingJobAction>(CudaDeviceActions));
         CudaDeviceActions.clear();
       }
 
@@ -3994,15 +4004,15 @@ class OffloadingActionBuilder final {
       unsigned I = 0;
       for (auto &LI : DeviceLinkerInputs) {
         // Each entry in DeviceLinkerInputs corresponds to a GPU arch.
-        auto *DeviceLinkAction =
-            C.MakeAction<LinkJobAction>(LI, types::TY_Image);
+        pri(auto *DeviceLinkAction =
+            C.MakeAction<LinkJobAction>(LI, types::TY_Image));
         // Linking all inputs for the current GPU arch.
         // LI contains all the inputs for the linker.
         OffloadAction::DeviceDependences DeviceLinkDeps;
         DeviceLinkDeps.add(*DeviceLinkAction, *ToolChains[0],
             GpuArchList[I], AssociatedOffloadKind);
-        Actions.push_back(C.MakeAction<OffloadAction>(
-            DeviceLinkDeps, DeviceLinkAction->getType()));
+        pri(Actions.push_back(C.MakeAction<OffloadAction>(
+            DeviceLinkDeps, DeviceLinkAction->getType())));
         ++I;
       }
       DeviceLinkerInputs.clear();
@@ -4013,14 +4023,14 @@ class OffloadingActionBuilder final {
       OffloadAction::DeviceDependences DDeps;
       if (!CompileDeviceOnly || !BundleOutput.hasValue() ||
           BundleOutput.getValue()) {
-        auto *TopDeviceLinkAction = C.MakeAction<LinkJobAction>(
+        pri(auto *TopDeviceLinkAction = C.MakeAction<LinkJobAction>(
             Actions,
-            CompileDeviceOnly ? types::TY_HIP_FATBIN : types::TY_Object);
+            CompileDeviceOnly ? types::TY_HIP_FATBIN : types::TY_Object));
         DDeps.add(*TopDeviceLinkAction, *ToolChains[0], nullptr,
                   AssociatedOffloadKind);
         // Offload the host object to the host linker.
-        AL.push_back(
-            C.MakeAction<OffloadAction>(DDeps, TopDeviceLinkAction->getType()));
+        pri(AL.push_back(
+            C.MakeAction<OffloadAction>(DDeps, TopDeviceLinkAction->getType())));
       } else {
         AL.append(Actions);
       }
@@ -4086,8 +4096,8 @@ class OffloadingActionBuilder final {
       if (auto *IA = dyn_cast<InputAction>(HostAction)) {
         OpenMPDeviceActions.clear();
         for (unsigned I = 0; I < ToolChains.size(); ++I)
-          OpenMPDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType()));
+          {pri(OpenMPDeviceActions.push_back(
+              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType())))};
         return ABRT_Success;
       }
 
@@ -4130,7 +4140,7 @@ class OffloadingActionBuilder final {
           assert(isa<CompileJobAction>(A));
           OffloadAction::DeviceDependences DDep;
           DDep.add(*A, **TC, /*BoundArch=*/nullptr, Action::OFK_OpenMP);
-          A = C.MakeAction<OffloadAction>(HDep, DDep);
+          pri(A = C.MakeAction<OffloadAction>(HDep, DDep));
           ++TC;
         }
       }
@@ -4150,7 +4160,7 @@ class OffloadingActionBuilder final {
       for (auto *A : OpenMPDeviceActions) {
         OffloadAction::DeviceDependences Dep;
         Dep.add(*A, **TI, /*BoundArch=*/nullptr, Action::OFK_OpenMP);
-        AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+        pri(AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType())));
         ++TI;
       }
       // We no longer need the action stored in this builder.
@@ -4164,13 +4174,13 @@ class OffloadingActionBuilder final {
       // Append a new link action for each device.
       auto TC = ToolChains.begin();
       for (auto &LI : DeviceLinkerInputs) {
-        auto *DeviceLinkAction =
-            C.MakeAction<LinkJobAction>(LI, types::TY_Image);
+        pri(auto *DeviceLinkAction =
+            C.MakeAction<LinkJobAction>(LI, types::TY_Image));
         OffloadAction::DeviceDependences DeviceLinkDeps;
         DeviceLinkDeps.add(*DeviceLinkAction, **TC, /*BoundArch=*/nullptr,
 		        Action::OFK_OpenMP);
-        AL.push_back(C.MakeAction<OffloadAction>(DeviceLinkDeps,
-            DeviceLinkAction->getType()));
+        pri(AL.push_back(C.MakeAction<OffloadAction>(DeviceLinkDeps,
+            DeviceLinkAction->getType())));
         ++TC;
       }
       DeviceLinkerInputs.clear();
@@ -4179,8 +4189,8 @@ class OffloadingActionBuilder final {
     Action* appendLinkHostActions(ActionList &AL) override {
       // Create wrapper bitcode from the result of device link actions and compile
       // it to an object which will be added to the host link command.
-      auto *BC = C.MakeAction<OffloadWrapperJobAction>(AL, types::TY_LLVM_BC);
-      auto *ASM = C.MakeAction<BackendJobAction>(BC, types::TY_PP_Asm);
+      pri(auto *BC = C.MakeAction<OffloadWrapperJobAction>(AL, types::TY_LLVM_BC));
+      pri(auto *ASM = C.MakeAction<BackendJobAction>(BC, types::TY_PP_Asm));
       return C.MakeAction<AssembleJobAction>(ASM, types::TY_Object);
     }
 
@@ -4290,6 +4300,7 @@ class OffloadingActionBuilder final {
         auto *AA = C.getDriver().ConstructPhaseAction(
             C, Args, phases::Assemble, BA, AssociatedOffloadKind);
         ActionList DeviceActions = {BA, AA};
+        pri2(LinkJobAction);
         return C.MakeAction<LinkJobAction>(DeviceActions,
                                            types::TY_CUDA_FATBIN);
       }
@@ -4305,10 +4316,10 @@ class OffloadingActionBuilder final {
                                                     BA, AssociatedOffloadKind);
 
       ActionList AL = {AA};
-      Action *LinkAction = C.MakeAction<LinkJobAction>(AL, types::TY_Image);
+      pri(Action *LinkAction = C.MakeAction<LinkJobAction>(AL, types::TY_Image));
       ActionList HIPActions = {LinkAction};
-      JobAction *HIPFatBinary =
-          C.MakeAction<LinkJobAction>(HIPActions, types::TY_HIP_FATBIN);
+      pri(JobAction *HIPFatBinary =
+          C.MakeAction<LinkJobAction>(HIPActions, types::TY_HIP_FATBIN));
       return HIPFatBinary;
     }
 
@@ -4353,8 +4364,8 @@ class OffloadingActionBuilder final {
               continue;
             // Add an additional compile action to generate the integration
             // header.
-            Action *CompileAction =
-                C.MakeAction<CompileJobAction>(A, types::TY_Nothing);
+            pri(Action *CompileAction =
+                C.MakeAction<CompileJobAction>(A, types::TY_Nothing));
             DA.add(*CompileAction, *TargetInfo.TC, TargetInfo.BoundArch,
                    Action::OFK_SYCL);
           }
@@ -4375,16 +4386,16 @@ class OffloadingActionBuilder final {
           if ((SYCLDeviceOnly || FinalPhase != phases::Link) &&
               Args.getLastArgValue(options::OPT_fsycl_device_obj_EQ)
                   .equals_insensitive("spirv")) {
-            auto *CompileAction =
-                C.MakeAction<CompileJobAction>(A, types::TY_LLVM_BC);
-            A = C.MakeAction<SPIRVTranslatorJobAction>(CompileAction,
-                                                       types::TY_SPIRV);
+            pri(auto *CompileAction =
+                C.MakeAction<CompileJobAction>(A, types::TY_LLVM_BC));
+            pri(A = C.MakeAction<SPIRVTranslatorJobAction>(CompileAction,
+                                                       types::TY_SPIRV));
             if (SYCLDeviceOnly)
               continue;
           } else {
             if (Args.hasArg(options::OPT_fsyntax_only))
               OutputType = types::TY_Nothing;
-            A = C.MakeAction<CompileJobAction>(A, OutputType);
+            pri(A = C.MakeAction<CompileJobAction>(A, OutputType));
           }
           DeviceCompilerInput = A;
         }
@@ -4428,8 +4439,8 @@ class OffloadingActionBuilder final {
             //   3) Translate final .bc file to .spv
             //   4) Wrap the binary with the offload wrapper which can be used
             //      by any compilation link step.
-            auto *DeviceLinkAction = C.MakeAction<LinkJobAction>(
-                SYCLLinkBinaryList, types::TY_Image);
+            pri( auto *DeviceLinkAction = C.MakeAction<LinkJobAction>(
+                SYCLLinkBinaryList, types::TY_Image));
             ActionList FullSYCLLinkBinaryList;
             bool SYCLDeviceLibLinked = false;
             FullSYCLLinkBinaryList.push_back(DeviceLinkAction);
@@ -4451,36 +4462,36 @@ class OffloadingActionBuilder final {
 
             Action *FullDeviceLinkAction = nullptr;
             if (SYCLDeviceLibLinked)
-              FullDeviceLinkAction = C.MakeAction<LinkJobAction>(
-                  FullSYCLLinkBinaryList, types::TY_LLVM_BC);
+              {pri(FullDeviceLinkAction = C.MakeAction<LinkJobAction>(
+                  FullSYCLLinkBinaryList, types::TY_LLVM_BC));}
             else
               FullDeviceLinkAction = DeviceLinkAction;
-            auto *PostLinkAction = C.MakeAction<SYCLPostLinkJobAction>(
+            pri(auto *PostLinkAction = C.MakeAction<SYCLPostLinkJobAction>(
                 FullDeviceLinkAction, types::TY_LLVM_BC,
-                types::TY_Tempfiletable);
+                types::TY_Tempfiletable));
             PostLinkAction->setRTSetsSpecConstants(!isAOT);
-            auto *ExtractIRFilesAction = C.MakeAction<FileTableTformJobAction>(
-                PostLinkAction, types::TY_Tempfilelist, types::TY_Tempfilelist);
+            pri(auto *ExtractIRFilesAction = C.MakeAction<FileTableTformJobAction>(
+                PostLinkAction, types::TY_Tempfilelist, types::TY_Tempfilelist));
             // single column w/o title fits TY_Tempfilelist format
             ExtractIRFilesAction->addExtractColumnTform(
                 FileTableTformJobAction::COL_CODE, false /*drop titles*/);
-            auto *TranslateAction = C.MakeAction<SPIRVTranslatorJobAction>(
-                ExtractIRFilesAction, types::TY_Tempfilelist);
+            pri(auto *TranslateAction = C.MakeAction<SPIRVTranslatorJobAction>(
+                ExtractIRFilesAction, types::TY_Tempfilelist));
 
             ActionList TformInputs{PostLinkAction, TranslateAction};
-            auto *ReplaceFilesAction = C.MakeAction<FileTableTformJobAction>(
-                TformInputs, types::TY_Tempfiletable, types::TY_Tempfiletable);
+            pri(auto *ReplaceFilesAction = C.MakeAction<FileTableTformJobAction>(
+                TformInputs, types::TY_Tempfiletable, types::TY_Tempfiletable));
             ReplaceFilesAction->addReplaceColumnTform(
                 FileTableTformJobAction::COL_CODE,
                 FileTableTformJobAction::COL_CODE);
 
-            SYCLLinkBinary = C.MakeAction<OffloadWrapperJobAction>(
-                ReplaceFilesAction, types::TY_Object);
+            pri(SYCLLinkBinary = C.MakeAction<OffloadWrapperJobAction>(
+                ReplaceFilesAction, types::TY_Object));
           } else {
-            auto *Link = C.MakeAction<LinkJobAction>(SYCLLinkBinaryList,
-                                                         types::TY_Image);
-            SYCLLinkBinary = C.MakeAction<SPIRVTranslatorJobAction>(
-                Link, types::TY_Image);
+            pri(auto *Link = C.MakeAction<LinkJobAction>(SYCLLinkBinaryList,
+                                                         types::TY_Image));
+            pri(SYCLLinkBinary = C.MakeAction<SPIRVTranslatorJobAction>(
+                Link, types::TY_Image));
           }
 
           // Remove the SYCL actions as they are already connected to an host
@@ -4537,8 +4548,8 @@ class OffloadingActionBuilder final {
 
         for (auto &TargetInfo : SYCLTargetInfoList) {
           (void)TargetInfo;
-          SYCLDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType()));
+          pri(SYCLDeviceActions.push_back(
+              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType())));
         }
         return ABRT_Success;
       }
@@ -4592,7 +4603,7 @@ class OffloadingActionBuilder final {
         Dep.add(*SYCLLinkBinary, *ToolChains.front(), BoundArch,
                 Action::OFK_SYCL);
       });
-      AL.push_back(C.MakeAction<OffloadAction>(Dep, SYCLLinkBinary->getType()));
+      pri(AL.push_back(C.MakeAction<OffloadAction>(Dep, SYCLLinkBinary->getType())));
       SYCLLinkBinary = nullptr;
     }
 
@@ -4613,7 +4624,7 @@ class OffloadingActionBuilder final {
 
         OffloadAction::DeviceDependences Dep;
         Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
-        AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+        pri(AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType())));
       }
       // We no longer need the action stored in this builder.
       SYCLDeviceActions.clear();
@@ -4706,11 +4717,11 @@ class OffloadingActionBuilder final {
               ++NumOfDeviceLibLinked;
               Arg *InputArg = MakeInputArg(Args, C.getDriver().getOpts(),
                                            Args.MakeArgString(LibName));
-              auto *SYCLDeviceLibsInputAction =
-                  C.MakeAction<InputAction>(*InputArg, types::TY_Object);
-              auto *SYCLDeviceLibsUnbundleAction =
+              pri(auto *SYCLDeviceLibsInputAction =
+                  C.MakeAction<InputAction>(*InputArg, types::TY_Object));
+              pri(auto *SYCLDeviceLibsUnbundleAction =
                   C.MakeAction<OffloadUnbundlingJobAction>(
-                      SYCLDeviceLibsInputAction);
+                      SYCLDeviceLibsInputAction));
               addDeviceDepences(SYCLDeviceLibsUnbundleAction);
               DeviceLinkObjects.push_back(SYCLDeviceLibsUnbundleAction);
               if (!LibLocSelected)
@@ -4777,19 +4788,19 @@ class OffloadingActionBuilder final {
             if (Input->getType() == types::TY_FPGA_AOCR ||
                 Input->getType() == types::TY_FPGA_AOCR_EMU)
               // Generate AOCX/AOCR
-              FPGAAOTAction =
-                  C.MakeAction<BackendCompileJobAction>(Input, FPGAOutType);
+              {pri(FPGAAOTAction =
+                  C.MakeAction<BackendCompileJobAction>(Input, FPGAOutType));}
             else if (Input->getType() == types::TY_FPGA_AOCX)
               FPGAAOTAction = Input;
             else
               llvm_unreachable("Unexpected FPGA input type.");
-            auto *RenameAction = C.MakeAction<FileTableTformJobAction>(
-                FPGAAOTAction, types::TY_Tempfilelist, types::TY_Tempfilelist);
+            pri(auto *RenameAction = C.MakeAction<FileTableTformJobAction>(
+                FPGAAOTAction, types::TY_Tempfilelist, types::TY_Tempfilelist));
             RenameAction->addRenameColumnTform(
                 FileTableTformJobAction::COL_ZERO,
                 FileTableTformJobAction::COL_CODE);
-            auto *DeviceWrappingAction = C.MakeAction<OffloadWrapperJobAction>(
-                RenameAction, types::TY_Object);
+            pri(auto *DeviceWrappingAction = C.MakeAction<OffloadWrapperJobAction>(
+                RenameAction, types::TY_Object));
             DA.add(*DeviceWrappingAction, *TC, BoundArch, Action::OFK_SYCL);
             continue;
           } else if (!types::isFPGA(Input->getType())) {
@@ -4800,11 +4811,11 @@ class OffloadingActionBuilder final {
               LinkObjects.push_back(Input);
               continue;
             }
-            Action *ConvertSPIRVAction =
+            pri(Action *ConvertSPIRVAction =
                 C.MakeAction<SpirvToIrWrapperJobAction>(
                     Input, Input->getType() == types::TY_Tempfilelist
                                ? types::TY_Tempfilelist
-                               : types::TY_LLVM_BC);
+                               : types::TY_LLVM_BC));
             LinkObjects.push_back(ConvertSPIRVAction);
           }
         }
@@ -4863,8 +4874,8 @@ class OffloadingActionBuilder final {
         //         |            OffloadWrapper            |
         //         .--------------------------------------.
         //
-        Action *DeviceLinkAction =
-            C.MakeAction<LinkJobAction>(LinkObjects, types::TY_LLVM_BC);
+        pri(Action *DeviceLinkAction =
+            C.MakeAction<LinkJobAction>(LinkObjects, types::TY_LLVM_BC));
         ActionList FullLinkObjects;
         bool SYCLDeviceLibLinked = false;
         FullLinkObjects.push_back(DeviceLinkAction);
@@ -5405,9 +5416,9 @@ public:
 
     // We have dependences we need to bundle together. We use an offload action
     // for that.
-    OffloadAction::HostDependence HDep(
+    pri(OffloadAction::HostDependence HDep(
         *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
-        /*BoundArch=*/nullptr, DDeps);
+        /*BoundArch=*/nullptr, DDeps));
     return C.MakeAction<OffloadAction>(HDep, DDeps);
   }
 
@@ -5430,13 +5441,13 @@ public:
     if (A->getType() == types::TY_FPGA_AOCO) {
       if (!hasFPGABinary(C, InputName, types::TY_FPGA_AOCO))
         return false;
-      A = C.MakeAction<InputAction>(*InputArg, types::TY_FPGA_AOCO);
+      pri(A = C.MakeAction<InputAction>(*InputArg, types::TY_FPGA_AOCO));
       return true;
     }
 
     // Type FPGA aocx is considered the same way for Hardware and Emulation.
     if (hasFPGABinary(C, InputName, types::TY_FPGA_AOCX)) {
-      A = C.MakeAction<InputAction>(*InputArg, types::TY_FPGA_AOCX);
+      pri(A = C.MakeAction<InputAction>(*InputArg, types::TY_FPGA_AOCX));
       return true;
     }
 
@@ -5447,7 +5458,7 @@ public:
       bool BinaryFound = hasFPGABinary(C, InputName, ArchiveType.first);
       if (BinaryFound && ArchiveType.second == IsFPGAEmulation) {
         // Binary matches check and emulation type, we keep this one.
-        A = C.MakeAction<InputAction>(*InputArg, ArchiveType.first);
+        pri(A = C.MakeAction<InputAction>(*InputArg, ArchiveType.first));
         return true;
       }
       ArchiveTypeMismatch(BinaryFound && ArchiveType.second != IsFPGAEmulation);
@@ -5501,10 +5512,10 @@ public:
         return false;
       if (HasFPGATarget && !updateInputForFPGA(A, InputArg, Args))
         return false;
-      auto UnbundlingHostAction = C.MakeAction<OffloadUnbundlingJobAction>(
+      pri(auto UnbundlingHostAction = C.MakeAction<OffloadUnbundlingJobAction>(
           A, (HasSPIRTarget && HostAction->getType() == types::TY_Archive)
                  ? types::TY_Tempfilelist
-                 : A->getType());
+                 : A->getType()));
       UnbundlingHostAction->registerDependentActionInfo(
           C.getSingleOffloadToolChain<Action::OFK_Host>(),
           /*BoundArch=*/StringRef(), Action::OFK_Host);
@@ -5580,6 +5591,7 @@ public:
       SB->appendTopLevelActions(OffloadAL);
     }
 
+    //std::cerr<<__FILE__<<": "<<__LINE__<<" "<<__func__<<CanUseBundler<<HostAction<<(HostAction->getType() != types::TY_Nothing)<<!OffloadAL.empty()<<std::endl;
     // If we can use the bundler, replace the host action by the bundling one in
     // the resulting list. Otherwise, just append the device actions. For
     // device only compilation, HostAction is a null pointer, therefore only do
@@ -5592,7 +5604,7 @@ public:
       // We expect that the host action was just appended to the action list
       // before this method was called.
       assert(HostAction == AL.back() && "Host action not in the list??");
-      HostAction = C.MakeAction<OffloadBundlingJobAction>(OffloadAL);
+      pri(HostAction = C.MakeAction<OffloadBundlingJobAction>(OffloadAL));
       recordHostAction(HostAction, InputArg);
       AL.back() = HostAction;
     } else
@@ -5612,8 +5624,8 @@ public:
   /// they can add it to the device linker inputs.
   void addDeviceLinkDependenciesFromHost(ActionList &LinkerInputs) {
     // Link image for reading dependencies from it.
-    auto *LA = C.MakeAction<LinkJobAction>(LinkerInputs,
-                                           types::TY_Host_Dependencies_Image);
+    pri(auto *LA = C.MakeAction<LinkJobAction>(LinkerInputs,
+                                           types::TY_Host_Dependencies_Image));
 
     // Calculate all the offload kinds used in the current compilation.
     unsigned ActiveOffloadKinds = 0u;
@@ -5624,7 +5636,7 @@ public:
         *LA, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
         /*BoundArch*/ nullptr, ActiveOffloadKinds);
 
-    auto *DA = C.MakeAction<OffloadDepsJobAction>(HDep, types::TY_LLVM_BC);
+    pri(auto *DA = C.MakeAction<OffloadDepsJobAction>(HDep, types::TY_LLVM_BC));
 
     for (auto *SB : SpecializedBuilders) {
       if (!SB->isValid())
@@ -5711,6 +5723,7 @@ public:
     OffloadAction::HostDependence HDep(
         *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
         /*BoundArch*/ nullptr, ActiveOffloadKinds);
+        pri2(OffloadAction)
     return C.MakeAction<OffloadAction>(HDep, DDeps);
   }
 
@@ -5726,7 +5739,7 @@ public:
     const llvm::opt::OptTable &Opts = C.getDriver().getOpts();
     auto unbundleStaticLib = [&](types::ID T, const StringRef &A) {
       Arg *InputArg = MakeInputArg(Args, Opts, Args.MakeArgString(A));
-      Action *Current = C.MakeAction<InputAction>(*InputArg, T);
+      pri(Action *Current = C.MakeAction<InputAction>(*InputArg, T));
       addHostDependenceToDeviceActions(Current, InputArg, Args);
       addDeviceDependencesToHostAction(Current, InputArg, phases::Link,
                                        PL.back(), PL);
@@ -5861,7 +5874,7 @@ void Driver::handleArguments(Compilation &C, DerivedArgList &Args,
       if (FinalPhase >= phases::Compile) {
         const types::ID HeaderType = lookupHeaderTypeForSourceType(InputType);
         // Build the pipeline for the pch file.
-        Action *ClangClPch = C.MakeAction<InputAction>(*InputArg, HeaderType);
+        pri(Action *ClangClPch = C.MakeAction<InputAction>(*InputArg, HeaderType));
         for (phases::ID Phase : types::getCompilationPhases(HeaderType))
           ClangClPch = ConstructPhaseAction(C, Args, Phase, ClangClPch);
         assert(ClangClPch);
@@ -6069,8 +6082,8 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
           !Args.hasArg(options::OPT_fno_sycl_use_footer)) {
-        Action *PreprocessAction =
-            C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies);
+        pri(Action *PreprocessAction =
+            C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies));
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,
                                                    /*BoundArch=*/nullptr);
         Actions.push_back(PreprocessAction);
@@ -6120,8 +6133,9 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
 
     // Add any top level actions generated for offloading.
     if (!UseNewOffloadingDriver)
-      OffloadBuilder.appendTopLevelActions(Actions, Current, InputArg);
-    else if (Current)
+    { std::cerr<<" ******* "<<__FILE__<<": "<<__LINE__<<std::endl;
+      OffloadBuilder.appendTopLevelActions(Actions, Current, InputArg); //<----- this goes to OffloadBundlingJobAction
+    }else if (Current)
       Current->propagateHostOffloadInfo(C.getActiveOffloadKinds(),
                                         /*BoundArch=*/nullptr);
   }
@@ -6145,9 +6159,9 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     auto wrapObject = [&] {
       if (EarlyLink && Args.hasArg(options::OPT_fintelfpga)) {
         // Only wrap the object with -fsycl-link=early
-        auto *BC = C.MakeAction<OffloadWrapperJobAction>(LI, types::TY_LLVM_BC);
-        auto *ASM = C.MakeAction<BackendJobAction>(BC, types::TY_PP_Asm);
-        LI = C.MakeAction<AssembleJobAction>(ASM, types::TY_Object);
+        pri(auto *BC = C.MakeAction<OffloadWrapperJobAction>(LI, types::TY_LLVM_BC));
+        pri(auto *ASM = C.MakeAction<BackendJobAction>(BC, types::TY_PP_Asm));
+        pri(LI = C.MakeAction<AssembleJobAction>(ASM, types::TY_Object));
       }
     };
     if (auto *IA = dyn_cast<InputAction>(LI)) {
@@ -6193,10 +6207,10 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     Action *LA;
     // Check if this Linker Job should emit a static library.
     if (ShouldEmitStaticLibrary(Args)) {
-      LA = C.MakeAction<StaticLibJobAction>(LinkerInputs, LinkType);
+      pri(LA = C.MakeAction<StaticLibJobAction>(LinkerInputs, LinkType));
     } else if (UseNewOffloadingDriver &&
                C.getActiveOffloadKinds() != Action::OFK_None) {
-      LA = C.MakeAction<LinkerWrapperJobAction>(LinkerInputs, types::TY_Image);
+      pri(LA = C.MakeAction<LinkerWrapperJobAction>(LinkerInputs, types::TY_Image));
       LA->propagateHostOffloadInfo(C.getActiveOffloadKinds(),
                                    /*BoundArch=*/nullptr);
     } else {
@@ -6209,8 +6223,8 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
 
   // Add an interface stubs merge action if necessary.
   if (!MergerInputs.empty())
-    Actions.push_back(
-        C.MakeAction<IfsMergeJobAction>(MergerInputs, types::TY_Image));
+    {pri(Actions.push_back(
+        C.MakeAction<IfsMergeJobAction>(MergerInputs, types::TY_Image)));}
 
   if (Args.hasArg(options::OPT_emit_interface_stubs)) {
     auto PhaseList = types::getCompilationPhases(
@@ -6230,7 +6244,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
           InputType == types::TY_Asm)
         continue;
 
-      Action *Current = C.MakeAction<InputAction>(*InputArg, InputType);
+      pri(Action *Current = C.MakeAction<InputAction>(*InputArg, InputType));
 
       for (auto Phase : PhaseList) {
         switch (Phase) {
@@ -6244,7 +6258,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
           if (InputType == types::TY_Object)
             break;
 
-          Current = C.MakeAction<CompileJobAction>(Current, types::TY_IFS_CPP);
+          pri(Current = C.MakeAction<CompileJobAction>(Current, types::TY_IFS_CPP));
           break;
         }
         case phases::IfsMerge: {
@@ -6264,8 +6278,8 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
 
     // Add an interface stubs merge action if necessary.
     if (!MergerInputs.empty())
-      Actions.push_back(
-          C.MakeAction<IfsMergeJobAction>(MergerInputs, types::TY_Image));
+      pri(Actions.push_back(
+          C.MakeAction<IfsMergeJobAction>(MergerInputs, types::TY_Image)));
   }
 
   // If --print-supported-cpus, -mcpu=? or -mtune=? is specified, build a custom
@@ -6273,9 +6287,9 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
   if (Arg *A = Args.getLastArg(options::OPT_print_supported_cpus)) {
     // Use the -mcpu=? flag as the dummy input to cc1.
     Actions.clear();
-    Action *InputAc = C.MakeAction<InputAction>(*A, types::TY_C);
-    Actions.push_back(
-        C.MakeAction<PrecompileJobAction>(InputAc, types::TY_Nothing));
+    pri(Action *InputAc = C.MakeAction<InputAction>(*A, types::TY_C));
+    pri(Actions.push_back(
+        C.MakeAction<PrecompileJobAction>(InputAc, types::TY_Nothing)));
     for (auto &I : Inputs)
       I.second->claim();
   }
@@ -6315,7 +6329,7 @@ Action *Driver::BuildOffloadingActions(Compilation &C,
       continue;
 
     for (unsigned I = 0; I < ToolChains.size(); ++I)
-      DeviceActions.push_back(C.MakeAction<InputAction>(*InputArg, InputType));
+      {pri(DeviceActions.push_back(C.MakeAction<InputAction>(*InputArg, InputType)));}
 
     if (DeviceActions.empty())
       return HostAction;
@@ -6339,7 +6353,7 @@ Action *Driver::BuildOffloadingActions(Compilation &C,
               /*BourdArch=*/nullptr, Action::OFK_OpenMP);
           OffloadAction::DeviceDependences DDep;
           DDep.add(*A, **TC, /*BoundArch=*/nullptr, Kind);
-          A = C.MakeAction<OffloadAction>(HDep, DDep);
+          pri(A = C.MakeAction<OffloadAction>(HDep, DDep));
         }
         ++TC;
       }
@@ -6355,6 +6369,7 @@ Action *Driver::BuildOffloadingActions(Compilation &C,
   OffloadAction::HostDependence HDep(
       *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
       /*BoundArch=*/nullptr, DDeps);
+      pri2(OffloadAction)
   return C.MakeAction<OffloadAction>(HDep, DDeps);
 }
 
@@ -6399,8 +6414,8 @@ Action *Driver::ConstructPhaseAction(
         TargetDeviceOffloadKind == Action::OFK_None) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
-      auto *AppendFooter =
-          C.MakeAction<AppendFooterJobAction>(Input, types::TY_CXX);
+      pri(auto *AppendFooter =
+          C.MakeAction<AppendFooterJobAction>(Input, types::TY_CXX));
       // FIXME: There are 2 issues with dependency generation in regards to
       // the integration footer that need to be addressed.
       // 1) Input file referenced on the RHS of a dependency is based on the
@@ -6408,14 +6423,17 @@ Action *Driver::ConstructPhaseAction(
       //    user input src file.
       // 2) When generating dependencies against a preprocessed file, header
       //    file information (using -MD or-MMD) is not provided.
+      pri2(PreprocessJobAction)
       return C.MakeAction<PreprocessJobAction>(AppendFooter, OutputTy);
     }
+    pri2(PreprocessJobAction)
     return C.MakeAction<PreprocessJobAction>(Input, OutputTy);
   }
   case phases::Precompile: {
     // API extraction should not generate an actual precompilation action.
     if (Args.hasArg(options::OPT_extract_api))
-      return C.MakeAction<ExtractAPIJobAction>(Input, types::TY_API_INFO);
+    { pri2(ExtractAPIJobAction)
+      return C.MakeAction<ExtractAPIJobAction>(Input, types::TY_API_INFO);}
 
     types::ID OutputTy = getPrecompiledType(Input->getType());
     assert(OutputTy != types::TY_INVALID &&
@@ -6437,33 +6455,46 @@ Action *Driver::ConstructPhaseAction(
     }
 
     if (ModName)
+    { pri2(HeaderModulePrecompileJobAction)
       return C.MakeAction<HeaderModulePrecompileJobAction>(Input, OutputTy,
-                                                           ModName);
+                                                           ModName);}
+    pri2(PrecompileJobAction)
     return C.MakeAction<PrecompileJobAction>(Input, OutputTy);
   }
   case phases::Compile: {
     if (Args.hasArg(options::OPT_fsyntax_only))
-      return C.MakeAction<CompileJobAction>(Input, types::TY_Nothing);
+      {pri2(CompileJobAction)
+      return C.MakeAction<CompileJobAction>(Input, types::TY_Nothing);}
     if (Args.hasArg(options::OPT_rewrite_objc))
-      return C.MakeAction<CompileJobAction>(Input, types::TY_RewrittenObjC);
+      {pri2(CompileJobAction)
+      return C.MakeAction<CompileJobAction>(Input, types::TY_RewrittenObjC);}
     if (Args.hasArg(options::OPT_rewrite_legacy_objc))
+      {pri2(CompileJobAction)
       return C.MakeAction<CompileJobAction>(Input,
-                                            types::TY_RewrittenLegacyObjC);
+                                            types::TY_RewrittenLegacyObjC);}
     if (Args.hasArg(options::OPT__analyze))
-      return C.MakeAction<AnalyzeJobAction>(Input, types::TY_Plist);
+      {pri2(AnalyzeJobAction)
+      return C.MakeAction<AnalyzeJobAction>(Input, types::TY_Plist);}
     if (Args.hasArg(options::OPT__migrate))
-      return C.MakeAction<MigrateJobAction>(Input, types::TY_Remap);
+      {pri2(MigrateJobAction)
+      return C.MakeAction<MigrateJobAction>(Input, types::TY_Remap);}
     if (Args.hasArg(options::OPT_emit_ast))
-      return C.MakeAction<CompileJobAction>(Input, types::TY_AST);
+      {pri2(CompileJobAction)
+      return C.MakeAction<CompileJobAction>(Input, types::TY_AST);}
     if (Args.hasArg(options::OPT_module_file_info))
-      return C.MakeAction<CompileJobAction>(Input, types::TY_ModuleFile);
+      {pri2(CompileJobAction)
+      return C.MakeAction<CompileJobAction>(Input, types::TY_ModuleFile);}
     if (Args.hasArg(options::OPT_verify_pch))
-      return C.MakeAction<VerifyPCHJobAction>(Input, types::TY_Nothing);
+      {pri2(VerifyPCHJobAction)
+      return C.MakeAction<VerifyPCHJobAction>(Input, types::TY_Nothing);}
     if (Args.hasArg(options::OPT_extract_api))
-      return C.MakeAction<ExtractAPIJobAction>(Input, types::TY_API_INFO);
+      {pri2(ExtractAPIJobAction)
+      return C.MakeAction<ExtractAPIJobAction>(Input, types::TY_API_INFO);}
+    pri2(CompileJobAction)
     return C.MakeAction<CompileJobAction>(Input, types::TY_LLVM_BC);
   }
   case phases::Backend: {
+    pri2(phases::Backend);
     if (isUsingLTO() && TargetDeviceOffloadKind == Action::OFK_None) {
       types::ID Output =
           Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
@@ -6486,6 +6517,7 @@ Action *Driver::ConstructPhaseAction(
     return C.MakeAction<BackendJobAction>(Input, types::TY_PP_Asm);
   }
   case phases::Assemble:
+    pri2(AssembleJobAction)
     return C.MakeAction<AssembleJobAction>(std::move(Input), types::TY_Object);
   }
 
