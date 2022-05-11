@@ -3428,6 +3428,8 @@ class OffloadingActionBuilder final {
 
   /// Builder interface. It doesn't build anything or keep any state.
   class DeviceActionBuilder {
+  public: // point 1
+    OffloadingActionBuilder* OffloadingActionBuilderRef;
   public:
     typedef const llvm::SmallVectorImpl<phases::ID> PhasesTy;
 
@@ -3515,6 +3517,9 @@ class OffloadingActionBuilder final {
     Action::OffloadKind getAssociatedOffloadKind() {
       return AssociatedOffloadKind;
     }
+    // Point 3
+    virtual void pushTopLevelActions(OffloadAction::DeviceDependences &DA) {}
+
   };
 
   /// Base class for CUDA/HIP action builder. It injects device code in
@@ -3850,6 +3855,8 @@ class OffloadingActionBuilder final {
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
                          phases::ID CurPhase, phases::ID FinalPhase,
                          PhasesTy &Phases) override {
+
+
       if (!IsActive)
         return ABRT_Inactive;
 
@@ -3884,6 +3891,14 @@ class OffloadingActionBuilder final {
 
             CudaDeviceActions[I] = C.getDriver().ConstructPhaseAction(
                 C, Args, Ph, CudaDeviceActions[I], Action::OFK_Cuda);
+
+            // Point 5
+            if (Ph == phases::Compile)
+            {
+               OffloadAction::DeviceDependences DDep;
+               DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
+               OffloadingActionBuilderRef->SYCLActionBuilderRef->pushTopLevelActions(DDep);  
+            }
 
             if (Ph == phases::Assemble)
               break;
@@ -4475,6 +4490,10 @@ class OffloadingActionBuilder final {
       return HIPFatBinary;
     }
 
+  private: // Point 3
+    std::vector<OffloadAction::DeviceDependences> DAVec; 
+  public: 
+    void pushTopLevelActions(OffloadAction::DeviceDependences &DA) override { DAVec.push_back(DA); }
   public:
     SYCLActionBuilder(Compilation &C, DerivedArgList &Args,
                       const Driver::InputList &Inputs)
@@ -4780,6 +4799,14 @@ class OffloadingActionBuilder final {
       }
       // We no longer need the action stored in this builder.
       SYCLDeviceActions.clear();
+
+      // Point 4
+      // Append all device actions followed by the proper offload action.
+      for (auto DA : DAVec) {
+        pri(AL.push_back(C.MakeAction<OffloadAction>(DA, types::TY_CUDA)));
+      }
+      // We no longer need the action stored in this builder.
+      DAVec.clear();
     }
 
     bool addSYCLDeviceLibs(const ToolChain *TC, ActionList &DeviceLinkObjects,
@@ -5468,7 +5495,11 @@ class OffloadingActionBuilder final {
   /// Flag set to true if all valid builders allow file bundling/unbundling.
   bool CanUseBundler;
 
+public: // point 2
+  DeviceActionBuilder* SYCLActionBuilderRef;
+
 public:
+
   OffloadingActionBuilder(Compilation &C, DerivedArgList &Args,
                           const Driver::InputList &Inputs)
       : C(C) {
@@ -5476,8 +5507,11 @@ public:
 
     IsValid = true;
 
+    // point 1
+    CudaActionBuilder* tmp;
     // Create a specialized builder for CUDA.
-    SpecializedBuilders.push_back(new CudaActionBuilder(C, Args, Inputs));
+    SpecializedBuilders.push_back(tmp = new CudaActionBuilder(C, Args, Inputs));
+    tmp->OffloadingActionBuilderRef = this;
 
     // Create a specialized builder for HIP.
     SpecializedBuilders.push_back(new HIPActionBuilder(C, Args, Inputs));
@@ -5486,7 +5520,7 @@ public:
     SpecializedBuilders.push_back(new OpenMPActionBuilder(C, Args, Inputs));
 
     // Create a specialized builder for SYCL.
-    SpecializedBuilders.push_back(new SYCLActionBuilder(C, Args, Inputs));
+    SpecializedBuilders.push_back(SYCLActionBuilderRef = new SYCLActionBuilder(C, Args, Inputs));
 
     //
     // TODO: Build other specialized builders here.
