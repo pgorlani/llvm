@@ -3882,6 +3882,15 @@ class OffloadingActionBuilder final {
           // Produce the device action from the current phase up to the assemble
           // phase.
           for (auto Ph : Phases) {
+            // Point 5
+            if (Ph == phases::Compile)
+            {
+               std::cerr<<std::endl<<std::endl<<"HERE"<<std::endl<<std::endl;
+               OffloadAction::DeviceDependences DDep;
+               DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
+               OffloadingActionBuilderRef->SYCLActionBuilderRef->pushTopLevelActions(DDep);  
+            }
+
             // Skip the phases that were already dealt with.
             if (Ph < CurPhase)
               continue;
@@ -3891,14 +3900,6 @@ class OffloadingActionBuilder final {
 
             CudaDeviceActions[I] = C.getDriver().ConstructPhaseAction(
                 C, Args, Ph, CudaDeviceActions[I], Action::OFK_Cuda);
-
-            // Point 5
-            if (Ph == phases::Compile)
-            {
-               OffloadAction::DeviceDependences DDep;
-               DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
-               OffloadingActionBuilderRef->SYCLActionBuilderRef->pushTopLevelActions(DDep);  
-            }
 
             if (Ph == phases::Assemble)
               break;
