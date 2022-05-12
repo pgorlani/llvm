@@ -3882,15 +3882,6 @@ class OffloadingActionBuilder final {
           // Produce the device action from the current phase up to the assemble
           // phase.
           for (auto Ph : Phases) {
-            // Point 5
-            if (Ph == phases::Compile)
-            {
-               std::cerr<<std::endl<<std::endl<<"HERE"<<std::endl<<std::endl;
-               OffloadAction::DeviceDependences DDep;
-               DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
-               OffloadingActionBuilderRef->SYCLActionBuilderRef->pushTopLevelActions(DDep);  
-            }
-
             // Skip the phases that were already dealt with.
             if (Ph < CurPhase)
               continue;
@@ -3959,8 +3950,23 @@ class OffloadingActionBuilder final {
                                            "before the backend phase!");
 
       // By default, we produce an action for each device arch.
-      for (Action *&A : CudaDeviceActions)
-        A = C.getDriver().ConstructPhaseAction(C, Args, CurPhase, A);
+      //  for (Action *&A : CudaDeviceActions)
+      //    A = C.getDriver().ConstructPhaseAction(C, Args, CurPhase, A);
+      for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
+
+          CudaDeviceActions[I] = C.getDriver().ConstructPhaseAction(
+              C, Args, CurPhase, CudaDeviceActions[I]);
+
+          // Point 5
+          if (CurPhase == phases::Compile)
+          {
+             std::cerr<<std::endl<<std::endl<<"HERE"<<std::endl<<std::endl;
+             OffloadAction::DeviceDependences DDep;
+             DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
+             OffloadingActionBuilderRef->SYCLActionBuilderRef->pushTopLevelActions(DDep);  
+          }
+
+      }
 
       return ABRT_Success;
     }
@@ -4702,6 +4708,9 @@ class OffloadingActionBuilder final {
       if (auto *IA = dyn_cast<InputAction>(HostAction)) {
         SYCLDeviceActions.clear();
 
+        //if (IA->getType() == types::TY_CUDA)
+        //  return ABRT_Inactive;
+
         // Options that are considered LinkerInput are not valid input actions
         // to the device tool chain.
         if (IA->getInputArg().getOption().hasFlag(options::LinkerInput))
@@ -4804,7 +4813,7 @@ class OffloadingActionBuilder final {
       // Point 4
       // Append all device actions followed by the proper offload action.
       for (auto DA : DAVec) {
-        pri(AL.push_back(C.MakeAction<OffloadAction>(DA, types::TY_CUDA)));
+        pri(AL.push_back(C.MakeAction<OffloadAction>(DA, DA.getActions().front()->getType())));
       }
       // We no longer need the action stored in this builder.
       DAVec.clear();
@@ -5795,7 +5804,7 @@ public:
     // the resulting list. Otherwise, just append the device actions. For
     // device only compilation, HostAction is a null pointer, therefore only do
     // this when HostAction is not a null pointer.
-    if (CanUseBundler && HostAction &&
+    if (/*CanUseBundler &&*/ HostAction &&
         HostAction->getType() != types::TY_Nothing && !OffloadAL.empty()) {
       // Add the host action to the list in order to create the bundling action.
       OffloadAL.push_back(HostAction);
