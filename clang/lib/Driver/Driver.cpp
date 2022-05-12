@@ -6322,8 +6322,8 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
 
     // Add an interface stubs merge action if necessary.
     if (!MergerInputs.empty())
-      pri(Actions.push_back(
-          C.MakeAction<IfsMergeJobAction>(MergerInputs, types::TY_Image)));
+      Actions.push_back(
+          C.MakeAction<IfsMergeJobAction>(MergerInputs, types::TY_Image));
   }
 
   // If --print-supported-cpus, -mcpu=? or -mtune=? is specified, build a custom
