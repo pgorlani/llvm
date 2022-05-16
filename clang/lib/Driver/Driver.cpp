@@ -4797,13 +4797,14 @@ class OffloadingActionBuilder final {
     }
 
     void appendTopLevelActions(ActionList &AL) override {
-      if (SYCLDeviceActions.empty())
+      if (SYCLDeviceActions.empty() && DAVec.empty())
         return;
 
+      std::cerr<<__FILE__<<": "<<__LINE__<<" "<<SYCLDeviceActions.size()<<" "<<SYCLTargetInfoList.size()<<" "<<DAVec.size()<<std::endl;
       // We should always have an action for each input.
-      assert(SYCLDeviceActions.size() == SYCLTargetInfoList.size() &&
-             "Number of SYCL actions and toolchains/boundarch pairs do not "
-             "match.");
+//      assert(SYCLDeviceActions.size() == SYCLTargetInfoList.size() &&
+//             "Number of SYCL actions and toolchains/boundarch pairs do not "
+//             "match.");
 
       // Append all device actions followed by the proper offload action.
       for (auto TargetActionInfo :
