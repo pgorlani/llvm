@@ -185,7 +185,7 @@ StringRef Action::GetOffloadKindName(OffloadKind Kind) {
   case OFK_Host:
     return "host";
   case OFK_Cuda:
-    return "cuda";
+    return "sycl";//"cuda";
   case OFK_OpenMP:
     return "openmp";
   case OFK_HIP:
