@@ -4523,7 +4523,7 @@ class OffloadingActionBuilder final {
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
                          phases::ID CurPhase, phases::ID FinalPhase,
                          PhasesTy &Phases) override {
-      return ABRT_Inactive;
+
       bool SYCLDeviceOnly = Args.hasArg(options::OPT_fsycl_device_only);
       if (CurPhase == phases::Preprocess) {
         // Do not perform the host compilation when doing preprocessing only
@@ -4552,8 +4552,13 @@ class OffloadingActionBuilder final {
         }
       }
 
+      // Point 6
+      //if (SYCLDeviceActions.empty())
+      //  return ABRT_Inactive;
+
+
       // Device compilation generates LLVM BC.
-      if (CurPhase == phases::Compile && !SYCLTargetInfoList.empty()) {
+      if (CurPhase == phases::Compile && !SYCLTargetInfoList.empty() && !SYCLDeviceActions.empty()) {
         Action *DeviceCompilerInput = nullptr;
         for (Action *&A : SYCLDeviceActions) {
           types::ID OutputType = types::TY_LLVM_BC;
@@ -4583,6 +4588,7 @@ class OffloadingActionBuilder final {
                Action::OFK_SYCL);
         return SYCLDeviceOnly ? ABRT_Ignore_Host : ABRT_Success;
       }
+
 
       // Backend/Assemble actions are obsolete for the SYCL device side
       if (CurPhase == phases::Backend || CurPhase == phases::Assemble)
@@ -4708,11 +4714,11 @@ class OffloadingActionBuilder final {
       // If this is an input action replicate it for each SYCL toolchain.
       if (auto *IA = dyn_cast<InputAction>(HostAction)) {
         SYCLDeviceActions.clear();
-        
+
         // Point 6
         if (IA->getType() == types::TY_CUDA)
           return ABRT_Inactive;
-
+ 
         // Options that are considered LinkerInput are not valid input actions
         // to the device tool chain.
         if (IA->getInputArg().getOption().hasFlag(options::LinkerInput))
