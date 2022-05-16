@@ -4523,6 +4523,7 @@ class OffloadingActionBuilder final {
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
                          phases::ID CurPhase, phases::ID FinalPhase,
                          PhasesTy &Phases) override {
+      return ABRT_Inactive;
       bool SYCLDeviceOnly = Args.hasArg(options::OPT_fsycl_device_only);
       if (CurPhase == phases::Preprocess) {
         // Do not perform the host compilation when doing preprocessing only
@@ -4707,9 +4708,10 @@ class OffloadingActionBuilder final {
       // If this is an input action replicate it for each SYCL toolchain.
       if (auto *IA = dyn_cast<InputAction>(HostAction)) {
         SYCLDeviceActions.clear();
-
-        //if (IA->getType() == types::TY_CUDA)
-        //  return ABRT_Inactive;
+        
+        // Point 6
+        if (IA->getType() == types::TY_CUDA)
+          return ABRT_Inactive;
 
         // Options that are considered LinkerInput are not valid input actions
         // to the device tool chain.
