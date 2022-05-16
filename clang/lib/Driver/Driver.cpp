@@ -6180,13 +6180,13 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
       if (I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
-          types::isSrcFile(I.first)) {
+          types::isSrcFile(I.first) && I.first != types::TY_CUDA) { /*Point 7*/
         // Unique ID is generated for source files and preprocessed files.
         SmallString<128> ResultID;
         llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
         addSYCLUniqueID(Args.MakeArgString(ResultID.str()), SrcFileName);
       }
-      if (!types::isSrcFile(I.first))
+      if (!types::isSrcFile(I.first)  && I.first != types::TY_CUDA) // Point 7
         continue;
 
       std::string TmpFileNameHeader;
@@ -6301,9 +6301,10 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       // is not based on the source + footer compilation.
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
-          !Args.hasArg(options::OPT_fno_sycl_use_footer)) {
-        Action *PreprocessAction =
-            C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies);
+          !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
+          I.first != types::TY_CUDA ) { /* Point 7*/
+        pri(Action *PreprocessAction =
+            C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies));
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,
                                                    /*BoundArch=*/nullptr);
         Actions.push_back(PreprocessAction);
@@ -6782,7 +6783,9 @@ Action *Driver::ConstructPhaseAction(
     types::ID HostPPType = types::getPreprocessedType(Input->getType());
     if (Args.hasArg(options::OPT_fsycl) && HostPPType != types::TY_INVALID &&
         !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
-        TargetDeviceOffloadKind == Action::OFK_None) {
+        TargetDeviceOffloadKind == Action::OFK_None &&
+        Input->getType() != types::TY_CUDA &&  /*Point 7*/
+        Input->getType() != types::TY_CUDA_DEVICE) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
       auto *AppendFooter =
