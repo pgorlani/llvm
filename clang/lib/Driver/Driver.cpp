@@ -4951,6 +4951,7 @@ class OffloadingActionBuilder final {
       // to produce a final binary.
       // They will be bundled per TC before being sent to the Offload Wrapper.
       llvm::MapVector<const ToolChain *, ActionList> LinkedInputs;
+      std::cerr<<__FILE__<<" "<<__LINE__<<" "<<DeviceLinkerInputs.size()<<std::endl;
       for (auto LinkInputEnum : enumerate(DeviceLinkerInputs)) {
         auto &LI = LinkInputEnum.value();
         const ToolChain *TC = SYCLTargetInfoList[LinkInputEnum.index()].TC;

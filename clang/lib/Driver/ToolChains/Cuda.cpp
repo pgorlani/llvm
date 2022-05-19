@@ -964,7 +964,7 @@ Tool *CudaToolChain::buildLinker() const {
 }
 
 Tool *CudaToolChain::SelectTool(const JobAction &JA) const {
-  if (OK == Action::OFK_SYCL) {
+  if (OK == Action::OFK_SYCL || OK == Action::OFK_Cuda) {
     if (JA.getKind() == Action::LinkJobClass &&
         JA.getType() == types::TY_LLVM_BC) {
       return static_cast<tools::NVPTX::SYCLLinker *>(ToolChain::SelectTool(JA))
