@@ -4457,7 +4457,11 @@ class OffloadingActionBuilder final {
             LinkerList.push_back(A);
           }
         }
-
+        /*
+        std::cerr<<__LINE__<<" --------------- DeviceLinkerInputs.size()"<<DeviceLinkerInputs.size()<<std::endl;
+        for (auto DA : DAVec)
+          DeviceLinkerInputs[0].push_back(DA.getActions().front());
+        */
         // With -fsycl-link-targets, we will take the unbundled binaries
         // for each device and link them together to a single binary that will
         // be used in a split compilation step.
@@ -4926,6 +4930,7 @@ class OffloadingActionBuilder final {
         ActionList FullLinkObjects;
         bool SYCLDeviceLibLinked = false;
         FullLinkObjects.push_back(DeviceLinkAction);
+
 
         // FIXME: Link all wrapper and fallback device libraries as default,
         // When spv online link is supported by all backends, the fallback
@@ -5778,7 +5783,7 @@ public:
         *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
         /*BoundArch*/ nullptr, ActiveOffloadKinds);
         pri2(OffloadAction)
-    return C.MakeAction<OffloadAction>(HDep, DDeps);
+    return C.MakeAction<OffloadAction>(HDep, DDeps); //< --- A mismatch in DDeps generates the assertion 
   }
 
   void unbundleStaticArchives(Compilation &C, DerivedArgList &Args,
@@ -6272,7 +6277,8 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       LA = C.MakeAction<LinkJobAction>(LinkerInputs, LinkType);
     }
     if (!UseNewOffloadingDriver)
-      LA = OffloadBuilder.processHostLinkAction(LA);
+      LA = OffloadBuilder.processHostLinkAction(LA); //< ------- this goes is the one that produce the error in linking
+    std::cerr<<__LINE__<<"OffloadBuilder.processHostLinkAction(LA) passed"<<std::endl;
     Actions.push_back(LA);
   }
 
