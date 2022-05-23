@@ -4609,11 +4609,12 @@ class OffloadingActionBuilder final {
             LinkerList.push_back(A);
           }
         }
-        /*
-        std::cerr<<__LINE__<<" --------------- DeviceLinkerInputs.size()"<<DeviceLinkerInputs.size()<<std::endl;
-        for (auto DA : DAVec)
-          DeviceLinkerInputs[0].push_back(DA.getActions().front());
-        */
+        
+        // Point 10 
+        for (auto DA : DAVec){
+          pri(DeviceLinkerInputs[0].push_back(C.MakeAction<OffloadAction>(DA, DA.getActions().front()->getType())));
+        }
+       
         // With -fsycl-link-targets, we will take the unbundled binaries
         // for each device and link them together to a single binary that will
         // be used in a split compilation step.
