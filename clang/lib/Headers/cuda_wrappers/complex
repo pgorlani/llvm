@@ -24,6 +24,14 @@
 #ifndef __CLANG_CUDA_WRAPPERS_COMPLEX
 #define __CLANG_CUDA_WRAPPERS_COMPLEX
 
+#include_next <complex>                                                         
+#if !defined(__device__)                                                        
+// The header has been included too early from the standard C++ library         
+// and CUDA-specific macros are not available yet.                              
+// Undo the include guard and try again later.                                  
+#undef __CLANG_CUDA_WRAPPERS_COMPLEX                                            
+#else
+
 // Wrapper around <complex> that forces its functions to be __host__
 // __device__.
 
@@ -79,12 +87,11 @@
 #define __failed_assertion __cuda_failed_assertion
 #endif
 
-#include_next <complex>
-
 #pragma pop_macro("__failed_assertion")
 #pragma pop_macro("_GLIBCXX_USE_C99_COMPLEX_TR1")
 #pragma pop_macro("_GLIBCXX_USE_C99_COMPLEX")
 
 #pragma clang force_cuda_host_device end
 
+#endif // __device__
 #endif // include guard
