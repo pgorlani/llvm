@@ -8684,7 +8684,7 @@ const ToolChain &Driver::getOffloadingDeviceToolChain(const ArgList &Args,
                   const Action::OffloadKind &TargetDeviceOffloadKind) const {
   // Use device / host triples as the key into the ToolChains map because the
   // device ToolChain we create depends on both.
-  auto &TC = ToolChains[Target.str() + "/" + HostTC.getTriple().str()];
+  auto &TC = ToolChains[Target.str() + "/" + HostTC.getTriple().str() + std::to_string(TargetDeviceOffloadKind)];
   if (!TC) {
     // Categorized by offload kind > arch rather than OS > arch like
     // the normal getToolChain call, as it seems a reasonable way to categorize
