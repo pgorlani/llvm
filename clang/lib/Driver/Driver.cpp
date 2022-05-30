@@ -5884,6 +5884,14 @@ public:
 
   void makeHostLinkAction(ActionList &LinkerInputs) {
 
+    // Point 11
+    auto _getOffloadKind = [](Action* A){
+      while(A->getInputs()[0]->getOffloadingHostActiveKinds() == Action::OFK_None){
+        A = A->getInputs()[0];
+      }
+      return A->getInputs()[0]->getOffloadingHostActiveKinds(); 
+    };
+
     bool is_CudaSYCL = false;
     std::vector<unsigned> offk;
     for (auto &I : InputArgToOffloadKindMap)
@@ -5895,7 +5903,7 @@ public:
 
     if(is_CudaSYCL)
       for (size_t i=0; i<LinkerInputs.size(); ++i){ 
-        OffloadAction::HostDependence HDep(*LinkerInputs[i], *C.getSingleOffloadToolChain<Action::OFK_Host>(), nullptr, offk[i]);
+        OffloadAction::HostDependence HDep(*LinkerInputs[i], *C.getSingleOffloadToolChain<Action::OFK_Host>(), nullptr, _getOffloadKind(LinkerInputs[i]) /*offk[i]*/);
         LinkerInputs[i] = C.MakeAction<OffloadAction>(HDep);
       }
 
