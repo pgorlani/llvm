@@ -5610,7 +5610,6 @@ public:
     // Check if all the programming models agree we should not emit the host
     // action. Also, keep track of the offloading kinds employed.
     auto &OffloadKind = InputArgToOffloadKindMap[InputArg];
-    std::cerr<<" .... "<<__LINE__<<" "<<OffloadKind<<" "<<InputArg<<std::endl;
     unsigned InactiveBuilders = 0u;
     unsigned IgnoringBuilders = 0u;
     for (auto *SB : SpecializedBuilders) {
@@ -5632,8 +5631,12 @@ public:
       // offload kind because the host will have to use it.
       if (RetCode != DeviceActionBuilder::ABRT_Inactive)
         OffloadKind |= SB->getAssociatedOffloadKind();
+std::cerr<<__FILE__<<__LINE__<<" "<<SB->getAssociatedOffloadKind()<<std::endl;
     }
 
+    // When the CurPhase is equal to Link, DDeps in empty
+
+    std::cerr<<" .... "<<__LINE__<<" "<<OffloadKind<<" "<<InputArg<<" CurPhase "<<CurPhase<<"  "<<DDeps.getActions().empty()<<std::endl;
     // If all builders agree that the host object should be ignored, just return
     // nullptr.
     if (IgnoringBuilders &&
@@ -5885,25 +5888,13 @@ public:
   void makeHostLinkAction(ActionList &LinkerInputs) {
 
     // Point 11
-    auto _getOffloadKind = [](Action* A){
-      while(A->getInputs()[0]->getOffloadingHostActiveKinds() == Action::OFK_None){
-        A = A->getInputs()[0];
-      }
-      return A->getInputs()[0]->getOffloadingHostActiveKinds(); 
-    };
-
     bool is_CudaSYCL = false;
-    std::vector<unsigned> offk;
     for (auto &I : InputArgToOffloadKindMap)
-    {
-      offk.push_back(I.second);
       if(I.second == (Action::OFK_Cuda|Action::OFK_SYCL)) is_CudaSYCL = true;
-      std::cerr<<"     "<<I.first<<" "<<I.second<<std::endl;
-    }
 
     if(is_CudaSYCL)
       for (size_t i=0; i<LinkerInputs.size(); ++i){ 
-        OffloadAction::HostDependence HDep(*LinkerInputs[i], *C.getSingleOffloadToolChain<Action::OFK_Host>(), nullptr, _getOffloadKind(LinkerInputs[i]) /*offk[i]*/);
+        OffloadAction::HostDependence HDep(*LinkerInputs[i], *C.getSingleOffloadToolChain<Action::OFK_Host>(), nullptr, InputArgToOffloadKindMap[HostActionToInputArgMap[LinkerInputs[i]]] );
         LinkerInputs[i] = C.MakeAction<OffloadAction>(HDep);
       }
 
