@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-
+#include <iostream>
 #include "clang/Driver/Action.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
@@ -82,7 +82,12 @@ void Action::propagateDeviceOffloadInfo(OffloadKind OKind, const char *OArch) {
   // Deps job uses the host kinds.
   if (Kind == OffloadDepsJobClass)
     return;
-
+  std::cerr<<__FILE__<<" "<<__LINE__<<"---------------------------"<<Inputs.size()<<"   ";
+  if (OKind==OFK_SYCL) std::cerr<<"SYCL";
+  if (OKind==OFK_Cuda) std::cerr<<"CUDA";
+  if (OffloadingDeviceKind==OFK_SYCL) std::cerr<<"SYCL";
+  if (OffloadingDeviceKind==OFK_Cuda) std::cerr<<"CUDA";
+  std::cerr<<std::endl;
   assert((OffloadingDeviceKind == OKind || OffloadingDeviceKind == OFK_None) &&
          "Setting device kind to a different device??");
   assert(!ActiveOffloadKindMask && "Setting a device kind in a host action??");
@@ -100,6 +105,7 @@ void Action::propagateHostOffloadInfo(unsigned OKinds, const char *OArch) {
 
   assert(OffloadingDeviceKind == OFK_None &&
          "Setting a host kind in a device action.");
+  std::cerr<<__FILE__<<__LINE__<<" "<<ActiveOffloadKindMask<<" "<<OKinds<<std::endl;
   ActiveOffloadKindMask |= OKinds;
   OffloadingArch = OArch;
 
@@ -180,7 +186,7 @@ StringRef Action::GetOffloadKindName(OffloadKind Kind) {
   case OFK_Host:
     return "host";
   case OFK_Cuda:
-    return "sycl";//"cuda";
+    return /*"sycl";*/"cuda";
   case OFK_OpenMP:
     return "openmp";
   case OFK_HIP:
@@ -228,6 +234,8 @@ OffloadAction::OffloadAction(const DeviceDependences &DDeps, types::ID Ty)
   if (OKinds.size() == 1)
     OffloadingArch = BArchs.front();
 
+  std::cerr<<__FILE__<<__LINE__<<" "<<getInputs().size()<<"  "<<OffloadingDeviceKind<<std::endl;
+
   // Propagate info to the dependencies.
   for (unsigned i = 0, e = getInputs().size(); i != e; ++i)
     getInputs()[i]->propagateDeviceOffloadInfo(OKinds[i], BArchs[i]);
@@ -239,6 +247,7 @@ OffloadAction::OffloadAction(const HostDependence &HDep,
       DevToolChains(DDeps.getToolChains()) {
   // We use the kinds of the host dependence for this action.
   OffloadingArch = HDep.getBoundArch();
+  std::cerr<<__FILE__<<__LINE__<<" "<<HDep.getOffloadKinds()<<std::endl;
   ActiveOffloadKindMask = HDep.getOffloadKinds();
   HDep.getAction()->propagateHostOffloadInfo(HDep.getOffloadKinds(),
                                              HDep.getBoundArch());
@@ -249,7 +258,7 @@ OffloadAction::OffloadAction(const HostDependence &HDep,
     if (auto *A = DDeps.getActions()[i]) {
       getInputs().push_back(A);
       A->propagateDeviceOffloadInfo(DDeps.getOffloadKinds()[i],
-                                    DDeps.getBoundArchs()[i]);
+                                    DDeps.getBoundArchs()[i]);  // < --- here is the problem
     }
 }
 
@@ -335,6 +344,7 @@ OffloadAction::HostDependence::HostDependence(Action &A, const ToolChain &TC,
     : HostAction(A), HostToolChain(TC), HostBoundArch(BoundArch) {
   for (auto K : DDeps.getOffloadKinds())
     HostOffloadKinds |= K;
+  std::cerr<<__FILE__<<__LINE__<<" HostOffloadKinds "<<HostOffloadKinds<<std::endl;
 }
 
 void JobAction::anchor() {}
