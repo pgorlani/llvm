@@ -4612,10 +4612,25 @@ class OffloadingActionBuilder final {
           }
         }
 
+
         // Point 10 
-        for (auto DA : DAVec){
-          pri(DeviceLinkerInputs[0].push_back(C.MakeAction<OffloadAction>(DA, DA.getActions().front()->getType())));
+        if (!DAVec.empty()) {
+          // The problem is the fact that the size and position of
+          // DeviceLinkerInputs follows TC. So, in case of SYCL-CUDA/CUDA only
+          // situation everything is fine since DeviceLinkerInputs has just an
+          // element. Since in case of .cu sycl compilation you cannot have any
+          // other target than nvptx64-nvidia-cuda.
+          assert(DAVec.size() == DeviceLinkerInputs.size() &&"");
+
+          for (auto DA : DAVec){
+            pri(DeviceLinkerInputs[0].push_back(C.MakeAction<OffloadAction>(DA, DA.getActions().front()->getType())));
+          }
+          DAVec.clear();
         }
+
+std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
+<<" "<<" DeviceLinkerInputs "<<DeviceLinkerInputs.size()<<" DAVec"<<DAVec.size()
+<<" DeviceLinkerInputs[0] "<<DeviceLinkerInputs[0].size()<<std::endl;
 
         // With -fsycl-link-targets, we will take the unbundled binaries
         // for each device and link them together to a single binary that will
@@ -4804,35 +4819,40 @@ class OffloadingActionBuilder final {
     }
 
     void appendTopLevelActions(ActionList &AL) override {
-      if (SYCLDeviceActions.empty() && DAVec.empty())
-        return;
+//      if (SYCLDeviceActions.empty() && DAVec.empty())
+//        return;
 
       std::cerr<<__FILE__<<": "<<__LINE__<<" "<<SYCLDeviceActions.size()<<" "<<SYCLTargetInfoList.size()<<" "<<DAVec.size()<<std::endl;
       // We should always have an action for each input.
-//      assert(SYCLDeviceActions.size() == SYCLTargetInfoList.size() &&
-//             "Number of SYCL actions and toolchains/boundarch pairs do not "
-//             "match.");
-
-      // Append all device actions followed by the proper offload action.
-      for (auto TargetActionInfo :
-           llvm::zip(SYCLDeviceActions, SYCLTargetInfoList)) {
-        Action *A = std::get<0>(TargetActionInfo);
-        DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
-
-        OffloadAction::DeviceDependences Dep;
-        Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
-        AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+      if (!SYCLDeviceActions.empty()){
+        assert(SYCLDeviceActions.size() == SYCLTargetInfoList.size() &&
+               "Number of SYCL actions and toolchains/boundarch pairs do not "
+               "match.");
+  
+        // Append all device actions followed by the proper offload action.
+        for (auto TargetActionInfo :
+             llvm::zip(SYCLDeviceActions, SYCLTargetInfoList)) {
+          Action *A = std::get<0>(TargetActionInfo);
+          DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
+  
+          OffloadAction::DeviceDependences Dep;
+          Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
+          pri(AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType())));
+        }
+        // We no longer need the action stored in this builder.
+        SYCLDeviceActions.clear();
       }
-      // We no longer need the action stored in this builder.
-      SYCLDeviceActions.clear();
 
       // Point 4
-      // Append all device actions followed by the proper offload action.
-      for (auto DA : DAVec) {
-        pri(AL.push_back(C.MakeAction<OffloadAction>(DA, DA.getActions().front()->getType())));
+      if(!DAVec.empty()){
+        assert(DAVec.size() == SYCLTargetInfoList.size() &&
+               "Number of SYCL actions and toolchains/boundarch pairs do not "
+               "match.");
+        for (auto DA : DAVec) {
+          pri(AL.push_back(C.MakeAction<OffloadAction>(DA, DA.getActions().front()->getType())));
+        }
+        DAVec.clear();
       }
-      // We no longer need the action stored in this builder.
-      DAVec.clear();
 
     }
 
@@ -6207,8 +6227,8 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     }
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
-      if (I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
-          types::isSrcFile(I.first) && I.first != types::TY_CUDA) { /*Point 7*/
+      if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
+          types::isSrcFile(I.first)) && I.first != types::TY_CUDA) { /*Point 7*/
         // Unique ID is generated for source files and preprocessed files.
         SmallString<128> ResultID;
         llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
