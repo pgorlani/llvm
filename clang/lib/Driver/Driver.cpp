@@ -3362,7 +3362,7 @@ class OffloadingActionBuilder final {
     }
     // Point 3
     virtual void pushTopLevelActions(OffloadAction::DeviceDependences &DA) {}
-    virtual void pushExternalAction(Action * A) {}
+    virtual void pushExternalCudaAction(Action * A) {}
   };
 
   /// Base class for CUDA/HIP action builder. It injects device code in
@@ -3820,8 +3820,8 @@ class OffloadingActionBuilder final {
              std::cerr<<std::endl<<std::endl<<"HERE"<<std::endl<<std::endl;
              OffloadAction::DeviceDependences DDep;
              DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
-             OffloadingActionBuilderRef->SYCLActionBuilderRef->pushTopLevelActions(DDep);  
-             //OffloadingActionBuilderRef->SYCLActionBuilderRef->pushExternalAction(C.MakeAction<OffloadAction>(DDep, DDep.getActions().front()->getType()));  
+          //   OffloadingActionBuilderRef->SYCLActionBuilderRef->pushTopLevelActions(DDep);  
+             OffloadingActionBuilderRef->SYCLActionBuilderRef->pushExternalCudaAction(C.MakeAction<OffloadAction>(DDep, DDep.getActions().front()->getType()));  
           }
 
       }
@@ -4348,9 +4348,10 @@ class OffloadingActionBuilder final {
 
   private: // Point 3
     std::vector<OffloadAction::DeviceDependences> DAVec; 
+    Action* ExternalCudaAction = nullptr;
   public: 
     void pushTopLevelActions(OffloadAction::DeviceDependences &DA) override { DAVec.push_back(DA); }
-    void pushExternalAction(Action * A) override { SYCLDeviceActions.push_back(A); }
+    void pushExternalCudaAction(Action * A) override { ExternalCudaAction = A; }
   public:
     SYCLActionBuilder(Compilation &C, DerivedArgList &Args,
                       const Driver::InputList &Inputs)
@@ -4460,7 +4461,7 @@ class OffloadingActionBuilder final {
           }
         }
 
-
+/*
         // Point 10 
         if (!DAVec.empty()) {
           // The problem is the fact that the size and position of
@@ -4475,6 +4476,21 @@ class OffloadingActionBuilder final {
           }
           DAVec.clear();
         }
+*/
+
+        if (ExternalCudaAction) {
+          // The problem is the fact that the size and position of
+          // DeviceLinkerInputs follows TC. So, in case of SYCL-CUDA/CUDA only
+          // situation everything is fine since DeviceLinkerInputs has just an
+          // element. Since in case of .cu sycl compilation you cannot have any
+          // other target than nvptx64-nvidia-cuda.
+          assert( DeviceLinkerInputs.size() == 1 &&"");
+
+          pri(DeviceLinkerInputs[0].push_back(ExternalCudaAction));
+
+          ExternalCudaAction = nullptr; 
+        }
+
 
 std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
 <<" "<<" DeviceLinkerInputs "<<DeviceLinkerInputs.size()<<" DAVec"<<DAVec.size()
@@ -4690,7 +4706,7 @@ std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
         // We no longer need the action stored in this builder.
         SYCLDeviceActions.clear();
       }
-
+/*
       // Point 4
       if(!DAVec.empty()){
         assert(DAVec.size() == SYCLTargetInfoList.size() &&
@@ -4701,6 +4717,16 @@ std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
         }
         DAVec.clear();
       }
+*/
+
+      if(ExternalCudaAction){
+        assert(SYCLTargetInfoList.size() == 1 &&
+               "Number of SYCL actions and toolchains/boundarch pairs do not "
+               "match.");
+        pri(AL.push_back(ExternalCudaAction));
+        ExternalCudaAction = nullptr;
+      }
+
 
     }
 
