@@ -4556,8 +4556,8 @@ class OffloadingActionBuilder final {
       }
 
       // Point 6
-      //if (SYCLDeviceActions.empty())
-      //  return ABRT_Inactive;
+      if (SYCLDeviceActions.empty() && !ExternalCudaAction)
+        return ABRT_Inactive;
 
 
       // Device compilation generates LLVM BC.
