@@ -3971,6 +3971,12 @@ class OffloadingActionBuilder final {
 
       return ABRT_Success;
     }
+
+    bool canUseBundlerUnbundler() const override {
+      std::cerr<<__FILE__<<" "<<__LINE__<<" "<<(OffloadingActionBuilderRef->SYCLActionBuilderRef->isValid())<<std::endl;
+      return (OffloadingActionBuilderRef->SYCLActionBuilderRef->isValid())? true: false;
+    }
+
   };
   /// \brief HIP action builder. It injects device code in the host backend
   /// action.
@@ -5596,7 +5602,7 @@ public:
 
     // Create a specialized builder for SYCL.
     SpecializedBuilders.push_back(SYCLActionBuilderRef = new SYCLActionBuilder(C, Args, Inputs));
-
+    std::cerr<<__FILE__<<" "<<__LINE__<<" "<<(SYCLActionBuilderRef->isValid())<<std::endl;
     //
     // TODO: Build other specialized builders here.
     //
@@ -5607,7 +5613,10 @@ public:
     unsigned ValidBuildersSupportingBundling = 0u;
     for (auto *SB : SpecializedBuilders) {
       IsValid = IsValid && !SB->initialize();
+      std::cerr<<__FILE__<<" "<<__LINE__<<" "<<(SB->isValid())<<std::endl;
+    }
 
+    for (auto *SB : SpecializedBuilders) {
       // Update the counters if the builder is valid.
       if (SB->isValid()) {
         ++ValidBuilders;
@@ -5874,7 +5883,7 @@ std::cerr<<__FILE__<<__LINE__<<" "<<SB->getAssociatedOffloadKind()<<std::endl;
     // the resulting list. Otherwise, just append the device actions. For
     // device only compilation, HostAction is a null pointer, therefore only do
     // this when HostAction is not a null pointer.
-    if (/*CanUseBundler &&*/ HostAction &&
+    if (CanUseBundler && HostAction &&
         HostAction->getType() != types::TY_Nothing && !OffloadAL.empty()) {
       // Add the host action to the list in order to create the bundling action.
       OffloadAL.push_back(HostAction);
