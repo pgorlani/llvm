@@ -3429,7 +3429,8 @@ class OffloadingActionBuilder final {
   /// Builder interface. It doesn't build anything or keep any state.
   class DeviceActionBuilder {
   public: // point 1
-    OffloadingActionBuilder* OffloadingActionBuilderRef;
+    OffloadingActionBuilder *OffloadingActionBuilderRef;
+
   public:
     typedef const llvm::SmallVectorImpl<phases::ID> PhasesTy;
 
@@ -3519,7 +3520,7 @@ class OffloadingActionBuilder final {
     }
     // Point 3
     virtual void pushTopLevelActions(OffloadAction::DeviceDependences &DA) {}
-    virtual void pushExternalCudaAction(Action * A) {}
+    virtual void pushExternalCudaAction(Action *A) {}
   };
 
   /// Base class for CUDA/HIP action builder. It injects device code in
@@ -3852,7 +3853,9 @@ class OffloadingActionBuilder final {
     }
 
     bool canUseBundlerUnbundler() const override {
-      return (OffloadingActionBuilderRef->SYCLActionBuilderRef->isValid())? true: false;
+      return (OffloadingActionBuilderRef->SYCLActionBuilderRef->isValid())
+                 ? true
+                 : false;
     }
 
     ActionBuilderReturnCode
@@ -3954,17 +3957,18 @@ class OffloadingActionBuilder final {
       // By default, we produce an action for each device arch.
       for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
 
-          CudaDeviceActions[I] = C.getDriver().ConstructPhaseAction(
-              C, Args, CurPhase, CudaDeviceActions[I]);
+        CudaDeviceActions[I] = C.getDriver().ConstructPhaseAction(
+            C, Args, CurPhase, CudaDeviceActions[I]);
 
-          // Point 5
-          if (CurPhase == phases::Compile)
-          {
-             OffloadAction::DeviceDependences DDep;
-             DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
-             OffloadingActionBuilderRef->SYCLActionBuilderRef->pushExternalCudaAction(C.MakeAction<OffloadAction>(DDep, DDep.getActions().front()->getType()));  
-          }
-
+        // Point 5
+        if (CurPhase == phases::Compile) {
+          OffloadAction::DeviceDependences DDep;
+          DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I],
+                   Action::OFK_Cuda);
+          OffloadingActionBuilderRef->SYCLActionBuilderRef
+              ->pushExternalCudaAction(C.MakeAction<OffloadAction>(
+                  DDep, DDep.getActions().front()->getType()));
+        }
       }
 
       return ABRT_Success;
@@ -4496,7 +4500,8 @@ class OffloadingActionBuilder final {
       return HIPFatBinary;
     }
 
-    Action* ExternalCudaAction = nullptr;
+    Action *ExternalCudaAction = nullptr;
+
   public:
     SYCLActionBuilder(Compilation &C, DerivedArgList &Args,
                       const Driver::InputList &Inputs)
@@ -4515,7 +4520,7 @@ class OffloadingActionBuilder final {
       Op(nullptr);
     }
 
-    void pushExternalCudaAction(Action * A) override { ExternalCudaAction = A; }
+    void pushExternalCudaAction(Action *A) override { ExternalCudaAction = A; }
 
     ActionBuilderReturnCode
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
@@ -4554,7 +4559,8 @@ class OffloadingActionBuilder final {
         return ABRT_Inactive;
 
       // Device compilation generates LLVM BC.
-      if (CurPhase == phases::Compile && !SYCLTargetInfoList.empty() && !SYCLDeviceActions.empty()) {
+      if (CurPhase == phases::Compile && !SYCLTargetInfoList.empty() &&
+          !SYCLDeviceActions.empty()) {
         Action *DeviceCompilerInput = nullptr;
         for (Action *&A : SYCLDeviceActions) {
           types::ID OutputType = types::TY_LLVM_BC;
@@ -4605,9 +4611,9 @@ class OffloadingActionBuilder final {
           }
         }
 
-        // Point 10 
+        // Point 10
         if (ExternalCudaAction) {
-          assert(DeviceLinkerInputs.size() == 1 &&"");
+          assert(DeviceLinkerInputs.size() == 1 && "");
           DeviceLinkerInputs[0].push_back(ExternalCudaAction);
           ExternalCudaAction = nullptr;
         }
@@ -4800,7 +4806,7 @@ class OffloadingActionBuilder final {
 
     void appendTopLevelActions(ActionList &AL) override {
       // We should always have an action for each input.
-      if (!SYCLDeviceActions.empty()){
+      if (!SYCLDeviceActions.empty()) {
         assert(SYCLDeviceActions.size() == SYCLTargetInfoList.size() &&
                "Number of SYCL actions and toolchains/boundarch pairs do not "
                "match.");
@@ -4819,15 +4825,13 @@ class OffloadingActionBuilder final {
         SYCLDeviceActions.clear();
       }
 
-      if(ExternalCudaAction){
+      if (ExternalCudaAction) {
         assert(SYCLTargetInfoList.size() == 1 &&
                "Number of SYCL actions and toolchains/boundarch pairs do not "
                "match.");
         AL.push_back(ExternalCudaAction);
         ExternalCudaAction = nullptr;
       }
-
-
     }
 
     bool addSYCLDeviceLibs(const ToolChain *TC, ActionList &DeviceLinkObjects,
@@ -5517,10 +5521,9 @@ class OffloadingActionBuilder final {
   bool CanUseBundler;
 
 public: // point 2
-  DeviceActionBuilder* SYCLActionBuilderRef;
+  DeviceActionBuilder *SYCLActionBuilderRef;
 
 public:
-
   OffloadingActionBuilder(Compilation &C, DerivedArgList &Args,
                           const Driver::InputList &Inputs)
       : C(C) {
@@ -5529,7 +5532,7 @@ public:
     IsValid = true;
 
     // point 1
-    CudaActionBuilder* tmp;
+    CudaActionBuilder *tmp;
     // Create a specialized builder for CUDA.
     SpecializedBuilders.push_back(tmp = new CudaActionBuilder(C, Args, Inputs));
     tmp->OffloadingActionBuilderRef = this;
@@ -5541,7 +5544,8 @@ public:
     SpecializedBuilders.push_back(new OpenMPActionBuilder(C, Args, Inputs));
 
     // Create a specialized builder for SYCL.
-    SpecializedBuilders.push_back(SYCLActionBuilderRef = new SYCLActionBuilder(C, Args, Inputs));
+    SpecializedBuilders.push_back(SYCLActionBuilderRef =
+                                      new SYCLActionBuilder(C, Args, Inputs));
 
     //
     // TODO: Build other specialized builders here.
@@ -5879,11 +5883,15 @@ public:
     // Point 11
     bool is_cu_in_SYCL = false;
     for (auto &I : InputArgToOffloadKindMap)
-      if(I.second == (Action::OFK_Cuda|Action::OFK_SYCL)) is_cu_in_SYCL = true;
+      if (I.second == (Action::OFK_Cuda | Action::OFK_SYCL))
+        is_cu_in_SYCL = true;
 
-    if(is_cu_in_SYCL)
-      for (size_t i=0; i<LinkerInputs.size(); ++i){ 
-        OffloadAction::HostDependence HDep(*LinkerInputs[i], *C.getSingleOffloadToolChain<Action::OFK_Host>(), nullptr, InputArgToOffloadKindMap[HostActionToInputArgMap[LinkerInputs[i]]] );
+    if (is_cu_in_SYCL)
+      for (size_t i = 0; i < LinkerInputs.size(); ++i) {
+        OffloadAction::HostDependence HDep(
+            *LinkerInputs[i], *C.getSingleOffloadToolChain<Action::OFK_Host>(),
+            nullptr,
+            InputArgToOffloadKindMap[HostActionToInputArgMap[LinkerInputs[i]]]);
         LinkerInputs[i] = C.MakeAction<OffloadAction>(HDep);
       }
 
@@ -6196,13 +6204,14 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
       if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
-          types::isSrcFile(I.first)) && I.first != types::TY_CUDA) { /*Point 7*/
+           types::isSrcFile(I.first)) &&
+          I.first != types::TY_CUDA) { /*Point 7*/
         // Unique ID is generated for source files and preprocessed files.
         SmallString<128> ResultID;
         llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
         addSYCLUniqueID(Args.MakeArgString(ResultID.str()), SrcFileName);
       }
-      if (!types::isSrcFile(I.first)  && I.first != types::TY_CUDA) // Point 7
+      if (!types::isSrcFile(I.first) && I.first != types::TY_CUDA) // Point 7
         continue;
 
       std::string TmpFileNameHeader;
@@ -6318,7 +6327,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
           !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
-          I.first != types::TY_CUDA ) { /* Point 7*/
+          I.first != types::TY_CUDA) { /* Point 7*/
         Action *PreprocessAction =
             C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies);
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,
@@ -6800,7 +6809,7 @@ Action *Driver::ConstructPhaseAction(
     if (Args.hasArg(options::OPT_fsycl) && HostPPType != types::TY_INVALID &&
         !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
         TargetDeviceOffloadKind == Action::OFK_None &&
-        Input->getType() != types::TY_CUDA &&  /*Point 7*/
+        Input->getType() != types::TY_CUDA && /*Point 7*/
         Input->getType() != types::TY_CUDA_DEVICE) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
@@ -8659,7 +8668,8 @@ const ToolChain &Driver::getOffloadingDeviceToolChain(const ArgList &Args,
                   const Action::OffloadKind &TargetDeviceOffloadKind) const {
   // Use device / host triples as the key into the ToolChains map because the
   // device ToolChain we create depends on both.
-  auto &TC = ToolChains[Target.str() + "/" + HostTC.getTriple().str() + std::to_string(TargetDeviceOffloadKind)];
+  auto &TC = ToolChains[Target.str() + "/" + HostTC.getTriple().str() +
+                        std::to_string(TargetDeviceOffloadKind)];
   if (!TC) {
     // Categorized by offload kind > arch rather than OS > arch like
     // the normal getToolChain call, as it seems a reasonable way to categorize

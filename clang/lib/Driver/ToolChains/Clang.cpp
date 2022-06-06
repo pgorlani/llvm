@@ -8668,7 +8668,9 @@ void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
         CurTC = TC;
       });
     }
-    Triples += (CurKind == Action::OFK_Cuda) ? Action::GetOffloadKindName(Action::OFK_SYCL) : Action::GetOffloadKindName(CurKind);
+    Triples += (CurKind == Action::OFK_Cuda)
+                   ? Action::GetOffloadKindName(Action::OFK_SYCL)
+                   : Action::GetOffloadKindName(CurKind);
     Triples += '-';
     Triples += CurTC->getTriple().normalize();
     if ((CurKind == Action::OFK_HIP || CurKind == Action::OFK_OpenMP ||
