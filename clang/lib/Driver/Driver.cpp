@@ -4410,8 +4410,8 @@ class OffloadingActionBuilder final {
       }
 
       // Point 6
-      if (SYCLDeviceActions.empty() && !ExternalCudaAction)
-        return ABRT_Inactive;
+//      if (SYCLDeviceActions.empty() && !ExternalCudaAction)
+//        return ABRT_Inactive;
 
 
       // Device compilation generates LLVM BC.
@@ -5830,7 +5830,10 @@ std::cerr<<__FILE__<<__LINE__<<" "<<SB->getAssociatedOffloadKind()<<std::endl;
     // Calculate all the offload kinds used in the current compilation.
     unsigned ActiveOffloadKinds = 0u;
     for (auto &I : InputArgToOffloadKindMap)
+    {
       ActiveOffloadKinds |= I.second;
+      std::cerr<<__FILE__<<__LINE__<<" "<<ActiveOffloadKinds<<std::endl;
+    }
 
     // If we don't have device dependencies, we don't have to create an offload
     // action.

@@ -484,6 +484,7 @@ OffloadDepsJobAction::OffloadDepsJobAction(
       HostTC(HDep.getToolChain()) {
   OffloadingArch = HDep.getBoundArch();
   ActiveOffloadKindMask = HDep.getOffloadKinds();
+  std::cerr<<__FILE__<<__LINE__<<" "<<HDep.getOffloadKinds()<<std::endl;
   HDep.getAction()->propagateHostOffloadInfo(HDep.getOffloadKinds(),
                                              HDep.getBoundArch());
 }
