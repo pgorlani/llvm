@@ -962,13 +962,11 @@ Tool *CudaToolChain::buildLinker() const {
     return new tools::NVPTX::SYCLLinker(*this);
   return new tools::NVPTX::Linker(*this);
 }
-#include<iostream>
+
 Tool *CudaToolChain::SelectTool(const JobAction &JA) const {
-std::cerr<<__FILE__<<__LINE__<<" "<<OK<<std::endl;
-  if (OK == Action::OFK_SYCL /*|| OK == Action::OFK_Cuda*/) {
+  if (OK == Action::OFK_SYCL) {
     if (JA.getKind() == Action::LinkJobClass &&
         JA.getType() == types::TY_LLVM_BC) {
-std::cerr<<__FILE__<<__LINE__<<std::endl;
       return static_cast<tools::NVPTX::SYCLLinker *>(ToolChain::SelectTool(JA))
           ->GetSYCLToolChainLinker();
     }
