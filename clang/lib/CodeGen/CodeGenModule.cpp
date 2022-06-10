@@ -3334,6 +3334,14 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
        std::cerr<<__FILE__<<" "<<__LINE__<<" "<<MangledName.str()<<" "
                 <<F->hasBody()<<" "<<F->getBody()<<std::endl;
 
+       if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
+         std::cerr<<__FILE__<<" "<<__LINE__<<std::endl;
+         // Emit the definition if it can't be deferred.
+         EmitGlobalDefinition(GD); // <----- this goes to CodeGenFunction
+         return;
+       }
+
+
       // Compute the function info and LLVM type.
 //      const CGFunctionInfo &FI = getTypes().arrangeGlobalDeclaration(GD);
 //      llvm::Type *Ty = getTypes().GetFunctionType(FI);
@@ -4089,7 +4097,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
           (GD.getCanonicalDecl().getDecl() !=
            OtherGD.getCanonicalDecl().getDecl()) &&
           DiagnosedConflictingDefinitions.insert(GD).second) {
-        getDiags().Report(D->getLocation(), diag::err_duplicate_mangled_name)
+        getDiags().Report(D->getLocation(), diag::err_duplicate_mangled_name) //<<------- this errors out if I have different functions with the same mangled name 
             << MangledName;
         getDiags().Report(OtherGD.getDecl()->getLocation(),
                           diag::note_previous_definition);
