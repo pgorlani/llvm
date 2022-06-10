@@ -168,6 +168,7 @@ public:
     return Loc->second;
   }
   void emitDeviceStub(CodeGenFunction &CGF, FunctionArgList &Args) override;
+  void emitHostStub(CodeGenFunction &CGF, FunctionArgList &Args);
   void handleVarRegistration(const VarDecl *VD,
                              llvm::GlobalVariable &Var) override;
   void
@@ -292,6 +293,15 @@ std::string CGNVCUDARuntime::getDeviceSideName(const NamedDecl *ND) {
   }
   return DeviceSideName;
 }
+
+void CGNVCUDARuntime::emitHostStub(CodeGenFunction &CGF,
+                                     FunctionArgList &Args) {
+  llvm::BasicBlock *EndBlock = CGF.createBasicBlock("setup.end");
+
+  TranslationUnitDecl *TUDecl = CGM.getContext().getTranslationUnitDecl();
+  DeclContext *DC = TranslationUnitDecl::castToDeclContext(TUDecl);
+ }
+
 
 void CGNVCUDARuntime::emitDeviceStub(CodeGenFunction &CGF,
                                      FunctionArgList &Args) {
