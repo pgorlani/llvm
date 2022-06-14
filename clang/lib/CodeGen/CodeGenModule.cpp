@@ -4065,8 +4065,10 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
       setDSOLocal(Entry);
     }
 
+    const auto *Global = cast<ValueDecl>(GD.getDecl());
     // If there are two attempts to define the same mangled name, issue an
     // error.
+    if (LangOpts.SYCLIsHost && !Global->hasAttr<CUDAHostAttr>() && !Global->hasAttr<CUDADeviceAttr>())
     if (IsForDefinition && !Entry->isDeclaration()) {
       GlobalDecl OtherGD;
       // Check that GD is not yet in DiagnosedConflictingDefinitions is required
