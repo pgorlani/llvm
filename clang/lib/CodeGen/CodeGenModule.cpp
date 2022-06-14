@@ -3329,37 +3329,15 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       if (isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
           Global->hasAttr<CUDADeviceAttr>())
       {
-       StringRef MangledName = getMangledName(GD);
-       const auto *F = cast<FunctionDecl>(GD.getDecl());
-       std::cerr<<__FILE__<<" "<<__LINE__<<" "<<MangledName.str()<<" "
-                <<F->hasBody()<<" "<<F->getBody()<<std::endl;
-
-       if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
-         std::cerr<<__FILE__<<" "<<__LINE__<<std::endl;
-         // Emit the definition if it can't be deferred.
-         EmitGlobalDefinition(GD); // <----- this goes to CodeGenFunction
-         return;
-       }
-
-
-      // Compute the function info and LLVM type.
-//      const CGFunctionInfo &FI = getTypes().arrangeGlobalDeclaration(GD);
-//      llvm::Type *Ty = getTypes().GetFunctionType(FI);
-
-//      clang::GlobalDecl dummy;    clang::FunctionDecl dummy;
-
-//      GetOrCreateLLVMFunction(MangledName, Ty, /*GD*/dummy, /*ForVTable=*/false,
-//                              /*DontDefer=*/false);
- 
-
-//  llvm::Constant* c = getModule().getOrInsertFunction("dummy", Ty);
-//  llvm::Function* dummy = llvm::cast<llvm::Function>(c);
-//  dummy->setLinkage(llvm::Function::ExternalLinkage);
-//  dummy->setCallingConv(llvm::CallingConv::C);
-//  llvm::BasicBlock* block = llvm::BasicBlock::Create("entry", dummy);
-//  llvm::IRBuilder builder(block); // no need in <>
-//  builder.CreateRetVoid();
-
+        StringRef MangledName = getMangledName(GD);
+        const auto *F = cast<FunctionDecl>(GD.getDecl());
+        std::cerr<<__FILE__<<" "<<__LINE__<<" "<<MangledName.str()<<" "
+                 <<F->hasBody()<<" "<<F->getBody()<<std::endl;
+  
+        if (LangOpts.SYCLIsHost && MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
+          std::cerr<<__FILE__<<" "<<__LINE__<<std::endl;
+          EmitGlobalDefinition(GD); // <----- this goes to CodeGenFunction
+        }
         return;
       }
       
@@ -5574,8 +5552,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
   if (!GV || (GV->getValueType() != Ty))
     GV = cast<llvm::GlobalValue>(GetAddrOfFunction(GD, Ty, /*ForVTable=*/false,
                                                    /*DontDefer=*/true,
-                                                   ForDefinition));
-
+                                                   ForDefinition)); // <---- who does creates the function? This function definition seems empty. The AST seems not present in it. (?)
   // Already emitted.
   if (!GV->isDeclaration())
     return;
@@ -5596,6 +5573,9 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
 
   // Set CodeGen attributes that represent floating point environment.
   setLLVMFunctionFEnvAttributes(D, Fn);
+
+  // Global declaration GD 
+  // GetAddrOfFunction -> GV -> Fn
 
   CodeGenFunction(*this).GenerateCode(GD, Fn, FI); //< --- this goes to CodeGenFunction clang/lib/CodeGen/CodeGenFunction.cpp
 

@@ -1632,7 +1632,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   if (Body && isa_and_nonnull<CoroutineBodyStmt>(Body))
     llvm::append_range(FnArgs, FD->parameters());
 
-std::cerr<<__FILE__<<__LINE__<<std::endl;
+std::cerr<<__FILE__<<" "<<__LINE__<<" "<<__func__<<std::endl;
   // Generate the body of the function.
   PGO.assignRegionCounters(GD, CurFn);
   if (isa<CXXDestructorDecl>(FD))
@@ -1649,10 +1649,19 @@ std::cerr<<__FILE__<<__LINE__<<std::endl;
     std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
     CGM.getCUDARuntime().emitDeviceStub(*this, Args); // < -- this goes to CGCUDANV.cpp
 }  else if (getLangOpts().CUDA &&
-           getLangOpts().CUDAIsDevice &&
-           FD->hasAttr<CUDAGlobalAttr>())
+           !getLangOpts().CUDAIsDevice &&
+           FD->hasAttr<CUDADeviceAttr>())
 {
     std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
+
+    if (FD->getReturnType()->isVoidType()) {
+      Builder.CreateRetVoid();
+    }
+    else {
+      Builder.CreateRet(llvm::UndefValue::get(Fn->getReturnType()));
+    }
+    return;
+
 }  else if (isa<CXXMethodDecl>(FD) &&
            cast<CXXMethodDecl>(FD)->isLambdaStaticInvoker()) {
     // The lambda static invoker function is special, because it forwards or
