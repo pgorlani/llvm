@@ -3330,9 +3330,11 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 
       // So device-only functions are the only things we skip.
       if (isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
-          Global->hasAttr<CUDADeviceAttr>())
+          Global->hasAttr<CUDADeviceAttr>()){
+        if (LangOpts.SYCLIsHost && MustBeEmitted(Global) && MayBeEmittedEagerly(Global))
+          EmitGlobalDefinition(GD);
         return;
-
+      }
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
              "Expected Variable or Function");
     }
@@ -4056,9 +4058,14 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
       setDSOLocal(Entry);
     }
 
+    bool check_for_duplicates = true;
+    if(LangOpts.CUDA && LangOpts.SYCLIsHost)
+      if(const FunctionDecl *FD = cast_or_null<FunctionDecl>(GD.getDecl()))
+        check_for_duplicates = FD->hasAttr<CUDAHostAttr>() && FD->hasAttr<CUDADeviceAttr>();
+
     // If there are two attempts to define the same mangled name, issue an
     // error.
-    if (IsForDefinition && !Entry->isDeclaration()) {
+    if (check_for_duplicates && IsForDefinition && !Entry->isDeclaration()) {
       GlobalDecl OtherGD;
       // Check that GD is not yet in DiagnosedConflictingDefinitions is required
       // to make sure that we issue an error only once.

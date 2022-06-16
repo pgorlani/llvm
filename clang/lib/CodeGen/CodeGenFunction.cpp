@@ -1640,7 +1640,16 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
            !getLangOpts().CUDAIsDevice &&
            FD->hasAttr<CUDAGlobalAttr>())
     CGM.getCUDARuntime().emitDeviceStub(*this, Args);
-  else if (isa<CXXMethodDecl>(FD) &&
+  else if (getLangOpts().CUDA &&
+           !getLangOpts().CUDAIsDevice &&
+           getLangOpts().SYCLIsHost &&
+           FD->hasAttr<CUDADeviceAttr>()){
+    if (FD->getReturnType()->isVoidType())
+      Builder.CreateRetVoid();
+    else
+      Builder.CreateRet(llvm::UndefValue::get(Fn->getReturnType()));
+    return;
+  } else if (isa<CXXMethodDecl>(FD) &&
            cast<CXXMethodDecl>(FD)->isLambdaStaticInvoker()) {
     // The lambda static invoker function is special, because it forwards or
     // clones the body of the function call operator (but is actually static).
