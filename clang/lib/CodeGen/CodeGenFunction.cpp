@@ -1650,6 +1650,7 @@ std::cerr<<__FILE__<<" "<<__LINE__<<" "<<__func__<<std::endl;
     CGM.getCUDARuntime().emitDeviceStub(*this, Args); // < -- this goes to CGCUDANV.cpp
 }  else if (getLangOpts().CUDA &&
            !getLangOpts().CUDAIsDevice &&
+           !FD->hasAttr<CUDAHostAttr>() &&
            FD->hasAttr<CUDADeviceAttr>())
 {
     std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;

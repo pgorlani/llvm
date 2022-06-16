@@ -2696,6 +2696,12 @@ void CodeGenModule::EmitDeferred() {
   CurDeclsToEmit.swap(DeferredDeclsToEmit);
 
   for (GlobalDecl &D : CurDeclsToEmit) {
+    std::cerr<<__FILE__<<__LINE__<<" "<<getMangledName(D).str()<<std::endl;
+
+    GlobalDecl OtherGD;
+    if (lookupRepresentativeDecl(getMangledName(D), OtherGD) && (D.getCanonicalDecl().getDecl() != OtherGD.getCanonicalDecl().getDecl())&& LangOpts.CUDA && LangOpts.SYCLIsHost )
+      continue;
+
     const ValueDecl *VD = cast<ValueDecl>(D.getDecl());
     // If emitting for SYCL device, emit the deferred alias
     // as well as what it aliases.
@@ -3336,7 +3342,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   
         if (LangOpts.SYCLIsHost && MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
           std::cerr<<__FILE__<<" "<<__LINE__<<std::endl;
-          EmitGlobalDefinition(GD); // <----- this goes to CodeGenFunction
+          addDeferredDeclToEmit(GD);
         }
         return;
       }
@@ -4065,15 +4071,9 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
       setDSOLocal(Entry);
     }
 
-    bool check_duplicate = true;
-    if(LangOpts.CUDA && LangOpts.SYCLIsHost)
-    {
-      if(const auto *Global = cast<FunctionDecl>(GD.getDecl()))
-        check_duplicate = !Global->hasAttr<CUDAHostAttr>() && !Global->hasAttr<CUDADeviceAttr>();
-    }
     // If there are two attempts to define the same mangled name, issue an
     // error.
-    if (check_duplicate && IsForDefinition && !Entry->isDeclaration()) {
+    if (/*check_duplicate &&*/ IsForDefinition && !Entry->isDeclaration()) {
       GlobalDecl OtherGD;
       // Check that GD is not yet in DiagnosedConflictingDefinitions is required
       // to make sure that we issue an error only once.
@@ -4410,6 +4410,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName, llvm::Type *Ty,
     if (Entry->getValueType() == Ty && Entry->getAddressSpace() == TargetAS)
       return Entry;
 
+    std::cerr<<__FILE__<<" "<<__LINE__<<" "<<__func__<<std::endl;
     // If there are two attempts to define the same mangled name, issue an
     // error.
     if (IsForDefinition && !Entry->isDeclaration()) {
@@ -5699,6 +5700,7 @@ void CodeGenModule::emitIFuncDefinition(GlobalDecl GD) {
     return;
   }
 
+  std::cerr<<__FILE__<<" "<<__LINE__<<" "<<__func__<<std::endl;
   // Report an error if some definition overrides ifunc.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry && !Entry->isDeclaration()) {
