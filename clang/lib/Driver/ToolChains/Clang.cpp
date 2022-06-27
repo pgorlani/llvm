@@ -8668,7 +8668,9 @@ void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
         CurTC = TC;
       });
     }
-    Triples += (CurKind == Action::OFK_Cuda)
+
+    bool Is_SYCL = TCArgs.hasFlag(options::OPT_fsycl, options::OPT_fno_sycl, false);
+    Triples += (Is_SYCL && (CurKind == Action::OFK_Cuda))
                    ? Action::GetOffloadKindName(Action::OFK_SYCL)
                    : Action::GetOffloadKindName(CurKind);
     Triples += '-';
