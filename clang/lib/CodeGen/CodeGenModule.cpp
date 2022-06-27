@@ -2708,11 +2708,13 @@ void CodeGenModule::EmitDeferred() {
   CurDeclsToEmit.swap(DeferredDeclsToEmit);
 
   for (GlobalDecl &D : CurDeclsToEmit) {
-    GlobalDecl OtherD;
-    if (LangOpts.CUDA && LangOpts.SYCLIsHost &&
-        lookupRepresentativeDecl(getMangledName(D), OtherD) &&
-        (D.getCanonicalDecl().getDecl() != OtherD.getCanonicalDecl().getDecl()))
-      continue;
+    if (LangOpts.CUDA && LangOpts.SYCLIsHost) {
+      GlobalDecl OtherD;
+      if (lookupRepresentativeDecl(getMangledName(D), OtherD) &&
+          (D.getCanonicalDecl().getDecl() != OtherD.getCanonicalDecl().getDecl())) {
+        continue;
+      }
+    }
     const ValueDecl *VD = cast<ValueDecl>(D.getDecl());
     // If emitting for SYCL device, emit the deferred alias
     // as well as what it aliases.
