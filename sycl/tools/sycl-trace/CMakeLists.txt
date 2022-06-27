@@ -78,7 +78,7 @@ if(SYCL_BUILD_PI_CUDA)
       "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
   )
 
-  if( EXISTS "${GEN_CUDA_META_H_DIR}/generated_cuda_meta.hjjj" )
+  if( EXISTS "${GEN_CUDA_META_H_DIR}/generated_cuda_meta.h" )
   add_custom_target(cuda-pretty-printers
     COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/generate_cuda_pretty_printers.py
