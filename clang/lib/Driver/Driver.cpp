@@ -3518,9 +3518,7 @@ class OffloadingActionBuilder final {
     Action::OffloadKind getAssociatedOffloadKind() {
       return AssociatedOffloadKind;
     }
-    // Point 3
-    virtual void pushTopLevelActions(OffloadAction::DeviceDependences &DA) {}
-    virtual void pushExternalCudaAction(Action *A) {}
+    virtual void pushForeignAction(Action *A) {}
   };
 
   /// Base class for CUDA/HIP action builder. It injects device code in
