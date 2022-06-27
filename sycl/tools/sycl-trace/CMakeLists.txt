@@ -72,13 +72,13 @@ if(SYCL_BUILD_PI_CUDA)
       ${CUDA_cupti_LIBRARY}
   )
 
-  find_path (GEN_CUDA_META_H_DIR generated_cuda_meta.hihhhh
+  find_path (GEN_CUDA_META_H_DIR generated_cuda_meta.h
     PATH
       ${CUDAToolkit_INCLUDE_DIRS}
       "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
   )
 
-  if( EXISTS "${GEN_CUDA_META_H_DIR}/generated_cuda_meta.h" )
+  if( EXISTS "${GEN_CUDA_META_H_DIR}/generated_cuda_meta.hjjj" )
   add_custom_target(cuda-pretty-printers
     COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/generate_cuda_pretty_printers.py
@@ -88,12 +88,9 @@ if(SYCL_BUILD_PI_CUDA)
       ${CMAKE_CURRENT_BINARY_DIR}/cuda_printers.def
     )
   else()
-  add_custom_target(cuda-pretty-printers
-    COMMAND touch ${CMAKE_CURRENT_BINARY_DIR}/cuda_printers.def
-    DEPENDS pi_cuda
-    BYPRODUCTS
-      ${CMAKE_CURRENT_BINARY_DIR}/cuda_printers.def
-    )
+    message(WARNING "generate_pi_pretty_printers.py not FOUND!")
+    file(TOUCH "${CMAKE_CURRENT_BINARY_DIR}/cuda_printers.def")
+    add_custom_target(cuda-pretty-printers)
   endif()
 
   add_dependencies(sycl_pi_trace_collector cuda-pretty-printers)
