@@ -3851,7 +3851,7 @@ class OffloadingActionBuilder final {
     }
 
     bool canUseBundlerUnbundler() const override {
-      return (OffloadingActionBuilderRef->SYCLActionBuilderRef->isValid())
+      return (Args.hasFlag(options::OPT_fsycl, options::OPT_fno_sycl, false))
                  ? true
                  : false;
     }
@@ -3964,7 +3964,7 @@ class OffloadingActionBuilder final {
           DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I],
                    Action::OFK_Cuda);
           OffloadingActionBuilderRef->SYCLActionBuilderRef
-              ->pushExternalCudaAction(C.MakeAction<OffloadAction>(
+              ->pushForeignAction(C.MakeAction<OffloadAction>(
                   DDep, DDep.getActions().front()->getType()));
         }
       }
@@ -4518,7 +4518,7 @@ class OffloadingActionBuilder final {
       Op(nullptr);
     }
 
-    void pushExternalCudaAction(Action *A) override { ExternalCudaAction = A; }
+    void pushForeignAction(Action *A) override { ExternalCudaAction = A; }
 
     ActionBuilderReturnCode
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
@@ -5551,9 +5551,7 @@ public:
     unsigned ValidBuildersSupportingBundling = 0u;
     for (auto *SB : SpecializedBuilders) {
       IsValid = IsValid && !SB->initialize();
-    }
 
-    for (auto *SB : SpecializedBuilders) {
       // Update the counters if the builder is valid.
       if (SB->isValid()) {
         ++ValidBuilders;
