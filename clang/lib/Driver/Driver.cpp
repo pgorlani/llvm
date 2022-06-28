@@ -4607,7 +4607,7 @@ class OffloadingActionBuilder final {
 
         // Point 10
         if (ExternalCudaAction) {
-          assert(DeviceLinkerInputs.size() == 1 && "");
+          assert(DeviceLinkerInputs.size() == 1 && "Number of SYCL actions and toolchains/boundarch pairs do not match.");
           DeviceLinkerInputs[0].push_back(ExternalCudaAction);
           ExternalCudaAction = nullptr;
         }
