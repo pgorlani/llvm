@@ -3963,9 +3963,14 @@ class OffloadingActionBuilder final {
           OffloadAction::DeviceDependences DDep;
           DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I],
                    Action::OFK_Cuda);
-          OffloadingActionBuilderRef->SYCLActionBuilderRef
-              ->pushForeignAction(C.MakeAction<OffloadAction>(
-                  DDep, DDep.getActions().front()->getType()));
+
+          for (auto *SB : OffloadingActionBuilderRef->SpecializedBuilders) {
+            if (SB->isValid() && SB != this) {
+                SB->pushForeignAction(C.MakeAction<OffloadAction>(
+                    DDep, DDep.getActions().front()->getType()));
+            }
+          }
+ 
         }
       }
 
@@ -5514,9 +5519,6 @@ class OffloadingActionBuilder final {
   /// Flag set to true if all valid builders allow file bundling/unbundling.
   bool CanUseBundler;
 
-public: // point 2
-  DeviceActionBuilder *SYCLActionBuilderRef;
-
 public:
   OffloadingActionBuilder(Compilation &C, DerivedArgList &Args,
                           const Driver::InputList &Inputs)
@@ -5524,8 +5526,6 @@ public:
     // Create a specialized builder for each device toolchain.
 
     IsValid = true;
-
-    // point 1
     CudaActionBuilder *tmp;
     // Create a specialized builder for CUDA.
     SpecializedBuilders.push_back(tmp = new CudaActionBuilder(C, Args, Inputs));
@@ -5538,8 +5538,7 @@ public:
     SpecializedBuilders.push_back(new OpenMPActionBuilder(C, Args, Inputs));
 
     // Create a specialized builder for SYCL.
-    SpecializedBuilders.push_back(SYCLActionBuilderRef =
-                                      new SYCLActionBuilder(C, Args, Inputs));
+    SpecializedBuilders.push_back(new SYCLActionBuilder(C, Args, Inputs));
 
     //
     // TODO: Build other specialized builders here.
