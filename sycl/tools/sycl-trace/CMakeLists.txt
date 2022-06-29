@@ -17,6 +17,11 @@ add_library(sycl_pi_trace_collector SHARED
   $<$<BOOL:${SYCL_BUILD_PI_CUDA}>:cuda_trace_collector.cpp>
 )
 
+target_compile_definitions(sycl_pi_trace_collector
+  PRIVATE
+    $<$<BOOL:${SYCL_BUILD_PI_CUDA}>:USE_PI_CUDA>
+)
+
 find_package(Python3 REQUIRED)
 
 add_custom_target(pi-pretty-printers
