@@ -93,7 +93,7 @@ if(SYCL_BUILD_PI_CUDA)
       ${CMAKE_CURRENT_BINARY_DIR}/cuda_printers.def
     )
   else()
-    message(WARNING "generate_pi_pretty_printers.py not FOUND!")
+    message(WARNING "generated_cuda_meta.h not FOUND! CUDA printer definitions cannot be generated")
     file(TOUCH "${CMAKE_CURRENT_BINARY_DIR}/cuda_printers.def")
     add_custom_target(cuda-pretty-printers)
   endif()
