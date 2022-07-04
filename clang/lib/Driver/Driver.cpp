@@ -4556,8 +4556,12 @@ class OffloadingActionBuilder final {
       }
 
       // Device compilation generates LLVM BC.
-      if (CurPhase == phases::Compile && !SYCLTargetInfoList.empty() &&
-          !SYCLDeviceActions.empty()) {
+      if (CurPhase == phases::Compile && !SYCLTargetInfoList.empty()) {
+          // TODO: handle stubfile handling when mix and matching programming model.
+          if (SYCLDeviceActions.empty()) {
+             return SYCLDeviceOnly ? ABRT_Ignore_Host : ABRT_Success;
+          }
+
         Action *DeviceCompilerInput = nullptr;
         for (Action *&A : SYCLDeviceActions) {
           types::ID OutputType = types::TY_LLVM_BC;
@@ -5871,11 +5875,13 @@ public:
 
     // Point 11
     bool is_cu_in_SYCL = false;
-    for (auto &I : InputArgToOffloadKindMap)
-      if (I.second == (Action::OFK_Cuda | Action::OFK_SYCL))
+    for (auto &I : InputArgToOffloadKindMap) {
+      if (I.second == (Action::OFK_Cuda | Action::OFK_SYCL)) {
         is_cu_in_SYCL = true;
+      }
+    }
 
-    if (is_cu_in_SYCL)
+    if (is_cu_in_SYCL) {
       for (size_t i = 0; i < LinkerInputs.size(); ++i) {
         OffloadAction::HostDependence HDep(
             *LinkerInputs[i], *C.getSingleOffloadToolChain<Action::OFK_Host>(),
@@ -5883,6 +5889,7 @@ public:
             InputArgToOffloadKindMap[HostActionToInputArgMap[LinkerInputs[i]]]);
         LinkerInputs[i] = C.MakeAction<OffloadAction>(HDep);
       }
+    }
 
     // Build a list of device linking actions.
     ActionList DeviceAL;
