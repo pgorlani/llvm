@@ -6326,6 +6326,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       // When performing -fsycl based compilations and generating dependency
       // information, perform a specific dependency generation compilation which
       // is not based on the source + footer compilation.
+      // TODO: Support SYCL offloading with CUDA files
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
           !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
@@ -6808,6 +6809,7 @@ Action *Driver::ConstructPhaseAction(
              "Cannot preprocess this input type!");
     }
     types::ID HostPPType = types::getPreprocessedType(Input->getType());
+    //TODO: Support SYCL offloading with CUDA files
     if (Args.hasArg(options::OPT_fsycl) && HostPPType != types::TY_INVALID &&
         !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
         TargetDeviceOffloadKind == Action::OFK_None &&
@@ -8668,7 +8670,7 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
 const ToolChain &Driver::getOffloadingDeviceToolChain(const ArgList &Args,
                   const llvm::Triple &Target, const ToolChain &HostTC,
                   const Action::OffloadKind &TargetDeviceOffloadKind) const {
-  // Use device / host triples as the key into the ToolChains map because the
+  // Use device / host triples offload kind as the key into the ToolChains map because the
   // device ToolChain we create depends on both.
   auto &TC = ToolChains[Target.str() + "/" + HostTC.getTriple().str() +
                         std::to_string(TargetDeviceOffloadKind)];
