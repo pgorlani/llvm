@@ -3965,7 +3965,7 @@ class OffloadingActionBuilder final {
                    Action::OFK_Cuda);
 
           for (auto *SB : OffloadingActionBuilderRef->SpecializedBuilders) {
-            if (SB->isValid() && SB != this) {
+            if (SB->isValid() && SB != this &&  SB->getAssociatedOffloadKind() == Action::OFK_SYCL) {
                 SB->pushForeignAction(C.MakeAction<OffloadAction>(
                     DDep, DDep.getActions().front()->getType()));
             }
