@@ -3965,14 +3965,8 @@ class OffloadingActionBuilder final {
           DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I],
                    Action::OFK_Cuda);
 
-          for (auto *SB : OffloadingActionBuilderRef.SpecializedBuilders) {
-            if (SB->isValid() && SB != this &&  SB->getAssociatedOffloadKind() == Action::OFK_SYCL) {
-                SB->pushForeignAction(C.MakeAction<OffloadAction>(
-                    DDep, DDep.getActions().front()->getType()));
-            }
-          }
- 
-        }
+          OffloadingActionBuilderRef.pushForeignAction(C.MakeAction<OffloadAction>(DDep, DDep.getActions().front()->getType()));
+       }
       }
 
       return ABRT_Success;
@@ -4527,7 +4521,11 @@ class OffloadingActionBuilder final {
       Op(nullptr);
     }
 
-    void pushForeignAction(Action *A) override { ExternalCudaAction = A; }
+    void pushForeignAction(Action *A) override {
+      if(A->getOffloadingDeviceKind() == Action::OFK_Cuda){
+        ExternalCudaAction = A;
+      }
+    }
 
     ActionBuilderReturnCode
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
@@ -5572,6 +5570,14 @@ public:
   ~OffloadingActionBuilder() {
     for (auto *SB : SpecializedBuilders)
       delete SB;
+  }
+
+  void pushForeignAction(Action *A) {
+    for (auto *SB : SpecializedBuilders) {
+      if (SB->isValid()) {
+          SB->pushForeignAction(A);
+      }
+    }
   }
 
   /// Record a host action and its originating input argument.
