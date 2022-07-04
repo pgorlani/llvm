@@ -3428,9 +3428,6 @@ class OffloadingActionBuilder final {
 
   /// Builder interface. It doesn't build anything or keep any state.
   class DeviceActionBuilder {
-  public: // point 1
-    OffloadingActionBuilder *OffloadingActionBuilderRef;
-
   public:
     typedef const llvm::SmallVectorImpl<phases::ID> PhasesTy;
 
@@ -3461,12 +3458,16 @@ class OffloadingActionBuilder final {
     /// The associated offload kind.
     Action::OffloadKind AssociatedOffloadKind = Action::OFK_None;
 
+    // point 1
+    OffloadingActionBuilder& OffloadingActionBuilderRef;
+
   public:
     DeviceActionBuilder(Compilation &C, DerivedArgList &Args,
                         const Driver::InputList &Inputs,
-                        Action::OffloadKind AssociatedOffloadKind)
+                        Action::OffloadKind AssociatedOffloadKind,
+                        OffloadingActionBuilder & OAB)
         : C(C), Args(Args), Inputs(Inputs),
-          AssociatedOffloadKind(AssociatedOffloadKind) {}
+          AssociatedOffloadKind(AssociatedOffloadKind), OffloadingActionBuilderRef(OAB) {}
     virtual ~DeviceActionBuilder() {}
 
     /// Fill up the array \a DA with all the device dependences that should be
@@ -3573,8 +3574,9 @@ class OffloadingActionBuilder final {
   public:
     CudaActionBuilderBase(Compilation &C, DerivedArgList &Args,
                           const Driver::InputList &Inputs,
-                          Action::OffloadKind OFKind)
-        : DeviceActionBuilder(C, Args, Inputs, OFKind) {}
+                          Action::OffloadKind OFKind, 
+                          OffloadingActionBuilder & OAB)
+        : DeviceActionBuilder(C, Args, Inputs, OFKind, OAB) {}
 
     ActionBuilderReturnCode addDeviceDepences(Action *HostAction) override {
       // While generating code for CUDA, we only depend on the host input action
@@ -3830,8 +3832,9 @@ class OffloadingActionBuilder final {
   class CudaActionBuilder final : public CudaActionBuilderBase {
   public:
     CudaActionBuilder(Compilation &C, DerivedArgList &Args,
-                      const Driver::InputList &Inputs)
-        : CudaActionBuilderBase(C, Args, Inputs, Action::OFK_Cuda) {
+                      const Driver::InputList &Inputs,
+                      OffloadingActionBuilder & OAB)
+        : CudaActionBuilderBase(C, Args, Inputs, Action::OFK_Cuda, OAB) {
       DefaultCudaArch = CudaArch::SM_35;
     }
 
@@ -3962,7 +3965,7 @@ class OffloadingActionBuilder final {
           DDep.add(*CudaDeviceActions[I], *ToolChains.front(), GpuArchList[I],
                    Action::OFK_Cuda);
 
-          for (auto *SB : OffloadingActionBuilderRef->SpecializedBuilders) {
+          for (auto *SB : OffloadingActionBuilderRef.SpecializedBuilders) {
             if (SB->isValid() && SB != this &&  SB->getAssociatedOffloadKind() == Action::OFK_SYCL) {
                 SB->pushForeignAction(C.MakeAction<OffloadAction>(
                     DDep, DDep.getActions().front()->getType()));
@@ -3989,8 +3992,9 @@ class OffloadingActionBuilder final {
 
   public:
     HIPActionBuilder(Compilation &C, DerivedArgList &Args,
-                     const Driver::InputList &Inputs)
-        : CudaActionBuilderBase(C, Args, Inputs, Action::OFK_HIP) {
+                     const Driver::InputList &Inputs,
+                     OffloadingActionBuilder & OAB)
+        : CudaActionBuilderBase(C, Args, Inputs, Action::OFK_HIP, OAB) {
       DefaultCudaArch = CudaArch::GFX803;
       if (Args.hasArg(options::OPT_gpu_bundle_output,
                       options::OPT_no_gpu_bundle_output))
@@ -4231,8 +4235,9 @@ class OffloadingActionBuilder final {
 
   public:
     OpenMPActionBuilder(Compilation &C, DerivedArgList &Args,
-                        const Driver::InputList &Inputs)
-        : DeviceActionBuilder(C, Args, Inputs, Action::OFK_OpenMP) {}
+                        const Driver::InputList &Inputs,
+                        OffloadingActionBuilder & OAB)
+        : DeviceActionBuilder(C, Args, Inputs, Action::OFK_OpenMP, OAB) {}
 
     ActionBuilderReturnCode
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
@@ -4505,8 +4510,9 @@ class OffloadingActionBuilder final {
 
   public:
     SYCLActionBuilder(Compilation &C, DerivedArgList &Args,
-                      const Driver::InputList &Inputs)
-        : DeviceActionBuilder(C, Args, Inputs, Action::OFK_SYCL) {}
+                      const Driver::InputList &Inputs,
+                      OffloadingActionBuilder & OAB)
+        : DeviceActionBuilder(C, Args, Inputs, Action::OFK_SYCL, OAB) {}
 
     void withBoundArchForToolChain(const ToolChain *TC,
                                    llvm::function_ref<void(const char *)> Op) {
@@ -5528,19 +5534,18 @@ public:
     // Create a specialized builder for each device toolchain.
 
     IsValid = true;
-    CudaActionBuilder *tmp;
+
     // Create a specialized builder for CUDA.
-    SpecializedBuilders.push_back(tmp = new CudaActionBuilder(C, Args, Inputs));
-    tmp->OffloadingActionBuilderRef = this;
+    SpecializedBuilders.push_back(new CudaActionBuilder(C, Args, Inputs, *this));
 
     // Create a specialized builder for HIP.
-    SpecializedBuilders.push_back(new HIPActionBuilder(C, Args, Inputs));
+    SpecializedBuilders.push_back(new HIPActionBuilder(C, Args, Inputs, *this));
 
     // Create a specialized builder for OpenMP.
-    SpecializedBuilders.push_back(new OpenMPActionBuilder(C, Args, Inputs));
+    SpecializedBuilders.push_back(new OpenMPActionBuilder(C, Args, Inputs, *this));
 
     // Create a specialized builder for SYCL.
-    SpecializedBuilders.push_back(new SYCLActionBuilder(C, Args, Inputs));
+    SpecializedBuilders.push_back(new SYCLActionBuilder(C, Args, Inputs, *this));
 
     //
     // TODO: Build other specialized builders here.
@@ -6199,16 +6204,17 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     }
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
-      if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
-           types::isSrcFile(I.first)) &&
-          I.first != types::TY_CUDA) { /*Point 7*/
-        // Unique ID is generated for source files and preprocessed files.
-        SmallString<128> ResultID;
-        llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
-        addSYCLUniqueID(Args.MakeArgString(ResultID.str()), SrcFileName);
+      if(I.first != types::TY_CUDA) {  /*Point 7*/
+        if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
+             types::isSrcFile(I.first))) {
+          // Unique ID is generated for source files and preprocessed files.
+          SmallString<128> ResultID;
+          llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
+          addSYCLUniqueID(Args.MakeArgString(ResultID.str()), SrcFileName);
+        }
+        if (!types::isSrcFile(I.first))
+          continue;
       }
-      if (!types::isSrcFile(I.first) && I.first != types::TY_CUDA) // Point 7
-        continue;
 
       std::string TmpFileNameHeader;
       std::string TmpFileNameFooter;
