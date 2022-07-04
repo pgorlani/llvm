@@ -3851,9 +3851,7 @@ class OffloadingActionBuilder final {
     }
 
     bool canUseBundlerUnbundler() const override {
-      return (Args.hasFlag(options::OPT_fsycl, options::OPT_fno_sycl, false))
-                 ? true
-                 : false;
+      return Args.hasFlag(options::OPT_fsycl, options::OPT_fno_sycl, false);
     }
 
     ActionBuilderReturnCode
