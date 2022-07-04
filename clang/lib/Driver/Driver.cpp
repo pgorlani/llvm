@@ -4565,7 +4565,7 @@ class OffloadingActionBuilder final {
       if (CurPhase == phases::Compile && !SYCLTargetInfoList.empty()) {
           // TODO: handle stubfile handling when mix and matching programming model.
           if (SYCLDeviceActions.empty()) {
-             return SYCLDeviceOnly ? ABRT_Ignore_Host : ABRT_Success;
+             return ABRT_Success;
           }
 
         Action *DeviceCompilerInput = nullptr;
