@@ -44,7 +44,8 @@ using IsReduOptForFastAtomicFetch =
 #ifdef SYCL_REDUCTION_DETERMINISTIC
     bool_constant<false>;
 #else
-    bool_constant<sycl::detail::is_sgeninteger<T>::value &&
+    bool_constant<((sycl::detail::is_sgenfloat<T>::value && sizeof(T) == 4) || 
+                   sycl::detail::is_sgeninteger<T>::value) &&
                   sycl::detail::IsValidAtomicType<T>::value &&
                   (sycl::detail::IsPlus<T, BinaryOperation>::value ||
                    sycl::detail::IsMinimum<T, BinaryOperation>::value ||
@@ -73,7 +74,7 @@ using IsReduOptForAtomic64Add =
 #else
     bool_constant<sycl::detail::IsPlus<T, BinaryOperation>::value &&
                   sycl::detail::is_sgenfloat<T>::value &&
-                  (sizeof(T) == 4 || sizeof(T) == 8)>;
+                  (/*sizeof(T) == 4 ||*/ sizeof(T) == 8)>;
 #endif
 
 // This type trait is used to detect if the group algorithm reduce() used with
