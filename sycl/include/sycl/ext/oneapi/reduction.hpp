@@ -285,7 +285,8 @@ public:
   template <access::address_space Space = access::address_space::global_space,
             typename _T = T, class _BinaryOperation = BinaryOperation>
   enable_if_t<BasicCheck<_T, Space, _BinaryOperation> &&
-              IsReduOptForFastAtomicFetch<T, _BinaryOperation>::value &&
+              (IsReduOptForFastAtomicFetch<T, _BinaryOperation>::value ||
+              IsReduOptForAtomic64Add<T, _BinaryOperation>::value) &&
               sycl::detail::IsMinimum<T, _BinaryOperation>::value>
   atomic_combine(_T *ReduVarPtr) const {
     atomic_combine_impl<Space>(
@@ -296,7 +297,8 @@ public:
   template <access::address_space Space = access::address_space::global_space,
             typename _T = T, class _BinaryOperation = BinaryOperation>
   enable_if_t<BasicCheck<_T, Space, _BinaryOperation> &&
-              IsReduOptForFastAtomicFetch<T, _BinaryOperation>::value &&
+              ( IsReduOptForFastAtomicFetch<T, _BinaryOperation>::value ||
+              IsReduOptForAtomic64Add<T, _BinaryOperation>::value) &&
               sycl::detail::IsMaximum<T, _BinaryOperation>::value>
   atomic_combine(_T *ReduVarPtr) const {
     atomic_combine_impl<Space>(
