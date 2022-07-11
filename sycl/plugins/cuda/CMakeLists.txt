@@ -49,10 +49,18 @@ if (SYCL_ENABLE_XPTI_TRACING)
   target_link_libraries(pi_cuda PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
+# The following find_path can be removed when FindCUDA -> FindCUDAToolkit, and
+# _CUPTI_INCLUDE_DIR -> CUDAToolkit_CUPTI_INCLUDE_DIR
+find_path(_CUPTI_INCLUDE_DIR cupti.h PATHS
+    "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
+    "${CUDA_INCLUDE_DIRS}/../extras/CUPTI/include"
+    "${CUDA_INCLUDE_DIRS}"
+    NO_DEFAULT_PATH)
+
 target_include_directories(pi_cuda
   PRIVATE
     ${sycl_inc_dir}
-    "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
+    ${_CUPTI_INCLUDE_DIR}
 )
 
 set_target_properties(pi_cuda PROPERTIES LINKER_LANGUAGE CXX)

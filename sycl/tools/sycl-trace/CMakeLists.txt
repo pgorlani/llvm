@@ -77,11 +77,11 @@ if(SYCL_BUILD_PI_CUDA)
       ${CUDA_cupti_LIBRARY}
   )
 
-  find_path (GEN_CUDA_META_H_DIR generated_cuda_meta.h
-    PATH
-      ${CUDAToolkit_INCLUDE_DIRS}
+  find_path(GEN_CUDA_META_H_DIR generated_cuda_meta.h PATHS
       "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
-  )
+      "${CUDA_INCLUDE_DIRS}/../extras/CUPTI/include"
+      "${CUDA_INCLUDE_DIRS}"
+      NO_DEFAULT_PATH)
 
   if( EXISTS "${GEN_CUDA_META_H_DIR}/generated_cuda_meta.h" )
   add_custom_target(cuda-pretty-printers
