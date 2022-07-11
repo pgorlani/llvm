@@ -27,6 +27,17 @@ if (SYCL_ENABLE_XPTI_TRACING)
   set(XPTI_PROXY_SRC "${CMAKE_SOURCE_DIR}/../xpti/src/xpti_proxy.cpp")
 endif()
 
+if(NOT CUDA_cupti_LIBRARY)
+  find_library(CUDA_cupti_LIBRARY
+    NAMES ${search_names}
+    HINTS ${CUDA_CUDA_LIBRARY}
+          ENV CUDA_PATH
+    PATH_SUFFIXES nvidia/current lib64 lib/x64 lib
+                  ../extras/CUPTI/lib64/
+                  ../extras/CUPTI/lib/
+  )
+endif()
+
 add_sycl_plugin(cuda
   SOURCES
     "${sycl_inc_dir}/CL/sycl/detail/pi.h"
