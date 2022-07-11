@@ -29,8 +29,8 @@ endif()
 
 if(NOT CUDA_cupti_LIBRARY)
   find_library(CUDA_cupti_LIBRARY
-    NAMES ${search_names}
-    HINTS ${CUDA_CUDA_LIBRARY}
+    NAMES cupti 
+    HINTS ${CUDA_TOOLKIT_ROOT_DIR}
           ENV CUDA_PATH
     PATH_SUFFIXES nvidia/current lib64 lib/x64 lib
                   ../extras/CUPTI/lib64/

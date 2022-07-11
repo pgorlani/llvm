@@ -66,22 +66,29 @@ if(SYCL_BUILD_PI_CUDA)
       $<$<BOOL:${SYCL_BUILD_PI_CUDA}>:USE_PI_CUDA>
   )
 
+  # The following find_path can be removed when FindCUDA -> FindCUDAToolkit, and
+  # _CUPTI_INCLUDE_DIR -> CUDAToolkit_CUPTI_INCLUDE_DIR
+  find_path(_CUPTI_INCLUDE_DIR cupti.h PATHS
+      "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
+      "${CUDA_INCLUDE_DIRS}/../extras/CUPTI/include"
+      "${CUDA_INCLUDE_DIRS}"
+      NO_DEFAULT_PATH)
+
   target_include_directories(sycl_pi_trace_collector
     PRIVATE
-    "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
+    ${_CUPTI_INCLUDE_DIR}
   )
 
   if(NOT CUDA_cupti_LIBRARY)
     find_library(CUDA_cupti_LIBRARY
-      NAMES ${search_names}
-      HINTS ${CUDA_CUDA_LIBRARY}
+      NAMES cupti 
+      HINTS ${CUDA_TOOLKIT_ROOT_DIR}
             ENV CUDA_PATH
       PATH_SUFFIXES nvidia/current lib64 lib/x64 lib
                     ../extras/CUPTI/lib64/
                     ../extras/CUPTI/lib/
     )
   endif()
-
 
   target_link_libraries(sycl_pi_trace_collector
     PRIVATE
