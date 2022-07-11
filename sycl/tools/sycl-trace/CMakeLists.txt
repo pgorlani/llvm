@@ -71,6 +71,18 @@ if(SYCL_BUILD_PI_CUDA)
     "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
   )
 
+  if(NOT CUDA_cupti_LIBRARY)
+    find_library(CUDA_cupti_LIBRARY
+      NAMES ${search_names}
+      HINTS ${CUDA_CUDA_LIBRARY}
+            ENV CUDA_PATH
+      PATH_SUFFIXES nvidia/current lib64 lib/x64 lib
+                    ../extras/CUPTI/lib64/
+                    ../extras/CUPTI/lib/
+    )
+  endif()
+
+
   target_link_libraries(sycl_pi_trace_collector
     PRIVATE
       cudadrv
