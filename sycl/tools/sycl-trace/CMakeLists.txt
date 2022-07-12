@@ -61,28 +61,27 @@ add_dependencies(sycl_pi_trace_collector pi-pretty-printers ze-pretty-printers)
 if(SYCL_BUILD_PI_CUDA)
 
   find_package(CUDA 10.1 REQUIRED)
+
   target_compile_definitions(sycl_pi_trace_collector
     PRIVATE
       $<$<BOOL:${SYCL_BUILD_PI_CUDA}>:USE_PI_CUDA>
   )
 
-  # The following find_path can be removed when FindCUDA -> FindCUDAToolkit, and
-  # _CUPTI_INCLUDE_DIR -> CUDAToolkit_CUPTI_INCLUDE_DIR
-  find_path(_CUPTI_INCLUDE_DIR cupti.h PATHS
-      "${CUDA_TOOLKIT_ROOT_DIR}/extras/CUPTI/include"
-      "${CUDA_INCLUDE_DIRS}/../extras/CUPTI/include"
-      "${CUDA_INCLUDE_DIRS}"
-      NO_DEFAULT_PATH)
+  # The following two if's can be removed when FindCUDA -> FindCUDAToolkit.
+  # CUDA_CUPTI_INCLUDE_DIR -> CUDAToolkit_CUPTI_INCLUDE_DIR
+  include(FindCUDACupti)
+  if(NOT CUDA_CUPTI_INCLUDE_DIR)
+     find_cuda_cupti_include_dir()
+  endif()
+  # CUDA_cupti_LIBRARY -> CUDAToolkit_cupti_LIBRARY
+  if(NOT CUDA_cupti_LIBRARY)
+     find_cuda_cupti_library()
+  endif()
 
   target_include_directories(sycl_pi_trace_collector
     PRIVATE
-    ${_CUPTI_INCLUDE_DIR}
+    ${CUDA_CUPTI_INCLUDE_DIR}
   )
-
-  if(NOT CUDA_cupti_LIBRARY)
-     include(FindCUDAcupti)
-     find_cuda_cupti(CUDA_cupti_LIBRARY)
-  endif()
 
   target_link_libraries(sycl_pi_trace_collector
     PRIVATE
