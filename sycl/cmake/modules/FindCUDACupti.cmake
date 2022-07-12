@@ -1,6 +1,6 @@
 macro(find_cuda_cupti_library)
 # The following if can be removed when FindCUDA -> FindCUDAToolkit
-  find_library(CUDA_cupti_LIBRARY
+  find_library(CUDA_CUPTI_LIBRARY
     NAMES cupti
     HINTS ${CUDA_TOOLKIT_ROOT_DIR}
           ENV CUDA_PATH
