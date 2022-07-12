@@ -28,14 +28,8 @@ if (SYCL_ENABLE_XPTI_TRACING)
 endif()
 
 if(NOT CUDA_cupti_LIBRARY)
-  find_library(CUDA_cupti_LIBRARY
-    NAMES cupti
-    HINTS ${CUDA_TOOLKIT_ROOT_DIR}
-          ENV CUDA_PATH
-    PATH_SUFFIXES nvidia/current lib64 lib/x64 lib
-                  ../extras/CUPTI/lib64/
-                  ../extras/CUPTI/lib/
-  )
+   include(FindCUDAcupti)
+   find_cuda_cupti(CUDA_cupti_LIBRARY)
 endif()
 
 add_sycl_plugin(cuda
