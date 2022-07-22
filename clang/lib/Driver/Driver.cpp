@@ -2481,7 +2481,8 @@ static unsigned PrintActions1(const Compilation &C, Action *A,
   unsigned Id = Ids.size();
   Ids[A] = Id;
   llvm::errs() << Indent + getSelfIndent(Kind) << Id << ": " << os.str() << ", "
-               << types::getTypeName(A->getType()) << offload_os.str() << "\n";
+               << types::getTypeName(A->getType()) ///// <----- this is
+               << offload_os.str() << "\n";
 
   return Id;
 }
@@ -4608,8 +4609,8 @@ std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
         SYCLDeviceActions.clear();
 
         // Point 6
-        if (IA->getType() == types::TY_CUDA)
-          return ABRT_Inactive;
+        //if (IA->getType() == types::TY_CUDA)
+        //  return ABRT_Inactive;
  
         // Options that are considered LinkerInput are not valid input actions
         // to the device tool chain.
@@ -4630,9 +4631,13 @@ std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
         for (auto &TargetInfo : SYCLTargetInfoList) {
           (void)TargetInfo;
           pri(SYCLDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType())));
+              C.MakeAction<InputAction>(IA->getInputArg(), (IA->getType() == types::TY_CUDA) ? types::TY_CXX : IA->getType())));
         }
-        return ABRT_Success;
+
+        if (IA->getType() == types::TY_CUDA)
+          return ABRT_Inactive;
+       
+         return ABRT_Success;
       }
 
       // If this is an unbundling action use it as is for each SYCL toolchain.
