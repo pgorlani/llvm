@@ -1,3 +1,4 @@
+#include<iostream>
 //===--- Driver.cpp - Clang GCC Compatible Driver -------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -5011,8 +5012,8 @@ class OffloadingActionBuilder final {
         SYCLDeviceActions.clear();
 
         // Skip CUDA Actions
-        if (IA->getType() == types::TY_CUDA)
-          return ABRT_Inactive;
+        //if (IA->getType() == types::TY_CUDA)
+        //  return ABRT_Inactive;
 
         // Options that are considered LinkerInput are not valid input actions
         // to the device tool chain.
@@ -5033,7 +5034,7 @@ class OffloadingActionBuilder final {
         for (auto &TargetInfo : SYCLTargetInfoList) {
           (void)TargetInfo;
           SYCLDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType()));
+              C.MakeAction<InputAction>(IA->getInputArg(), (IA->getType() == types::TY_CUDA) ? types::TY_CXX : IA->getType()));
         }
         return ABRT_Success;
       }
@@ -6047,6 +6048,7 @@ public:
 
     if (DDeps.getActions().empty())
       return HostAction;
+    std::cerr<<__LINE__<<" "<<HostAction->getType()<<" "<<types::TY_CXX<<std::endl;
 
     // We have dependences we need to bundle together. We use an offload action
     // for that.
