@@ -1,4 +1,3 @@
-#include<iostream>
 //===--- Driver.cpp - Clang GCC Compatible Driver -------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -6048,7 +6047,6 @@ public:
 
     if (DDeps.getActions().empty())
       return HostAction;
-    std::cerr<<__LINE__<<" "<<HostAction->getType()<<" "<<types::TY_CXX<<std::endl;
 
     // We have dependences we need to bundle together. We use an offload action
     // for that.
