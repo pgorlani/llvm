@@ -1219,7 +1219,7 @@ def : MutualExclusions<[CUDADeviceBuiltinSurfaceType,
 def CUDAGlobal : InheritableAttr {
   let Spellings = [GNU<"global">, Declspec<"__global__">];
   let Subjects = SubjectList<[Function]>;
-  let LangOpts = [CUDA];
+  let LangOpts = [CUDA, SYCLIsDevice];
   let Documentation = [Undocumented];
 }
 def : MutualExclusions<[CUDADevice, CUDAGlobal]>;
