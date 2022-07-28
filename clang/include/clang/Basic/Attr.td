@@ -1185,7 +1185,7 @@ def CUDACudartBuiltin : IgnoredAttr {
 def CUDADevice : InheritableAttr {
   let Spellings = [GNU<"device">, Declspec<"__device__">];
   let Subjects = SubjectList<[Function, Var]>;
-  let LangOpts = [CUDA];
+  let LangOpts = [CUDA, SYCLIsDevice];
   let Documentation = [Undocumented];
 }
 
