@@ -4523,11 +4523,11 @@ bool Sema::checkSYCLDeviceFunction(SourceLocation Loc, FunctionDecl *Callee) {
 
   // TODO Set DiagKind to K_Immediate/K_Deferred to emit diagnostics for Callee
   SemaDiagnosticBuilder(DiagKind, Loc, diag::err_sycl_restrict, Caller, *this,
-                        DeviceDiagnosticReason::Sycl)
+                        DeviceDiagnosticReason::Sycl|DeviceDiagnosticReason::CudaDevice)
       << Sema::KernelCallUndefinedFunction;
   SemaDiagnosticBuilder(DiagKind, Callee->getLocation(),
                         diag::note_previous_decl, Caller, *this,
-                        DeviceDiagnosticReason::Sycl)
+                        DeviceDiagnosticReason::Sycl|DeviceDiagnosticReason::CudaDevice)
       << Callee;
 
   return DiagKind != SemaDiagnosticBuilder::K_Immediate &&
