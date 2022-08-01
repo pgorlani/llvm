@@ -3638,7 +3638,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     }
   }
 
-  if (LangOpts.SYCLIsDevice && (Global->hasAttr<CUDADeviceAttr>() || Global->hasAttr<CUDAGlobalAttr>()))
+  if (LangOpts.SYCLIsDevice && Global->hasAttr<CUDAHostAttr>())
   {
     StringRef MangledName = getMangledName(GD);
     std::cerr<<__FILE__<<__LINE__<<MangledName.str()<<std::endl;
