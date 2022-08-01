@@ -4486,7 +4486,7 @@ Sema::SYCLDiagIfDeviceCode(SourceLocation Loc, unsigned DiagID,
                            DeviceDiagnosticReason Reason) {
   assert(getLangOpts().SYCLIsDevice &&
          "Should only be called during SYCL compilation");
-std::cerr<<__FILE__<<__LINE__<<std::endl;
+//std::cerr<<__FILE__<<__LINE__<<std::endl;
   FunctionDecl *FD = dyn_cast<FunctionDecl>(getCurLexicalContext());
   SemaDiagnosticBuilder::Kind DiagKind = [this, FD, Reason] {
     if (DiagnosingSYCLKernel)
@@ -4511,7 +4511,7 @@ bool Sema::checkSYCLDeviceFunction(SourceLocation Loc, FunctionDecl *Callee) {
          "Should only be called during SYCL compilation");
   assert(Callee && "Callee may not be null.");
 
-std::cerr<<__FILE__<<__LINE__<<std::endl;
+//std::cerr<<__FILE__<<__LINE__<<std::endl;
 
   // Errors in an unevaluated context don't need to be generated,
   // so we can safely skip them.
