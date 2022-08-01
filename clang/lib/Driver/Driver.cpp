@@ -5033,7 +5033,7 @@ class OffloadingActionBuilder final {
         for (auto &TargetInfo : SYCLTargetInfoList) {
           (void)TargetInfo;
           SYCLDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), (IA->getType() == types::TY_CUDA) ? types::TY_CXX : IA->getType()));
+              C.MakeAction<InputAction>(IA->getInputArg(), /*(IA->getType() == types::TY_CUDA) ? types::TY_CXX :*/ IA->getType()));
         }
         return ABRT_Success;
       }
