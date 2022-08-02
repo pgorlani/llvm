@@ -730,12 +730,12 @@ void CudaToolChain::addClangTargetOptions(
 
   StringRef GpuArch = DriverArgs.getLastArgValue(options::OPT_march_EQ);
   assert(!GpuArch.empty() && "Must have an explicit GPU arch.");
-  assert((DeviceOffloadingKind == Action::OFK_OpenMP ||
-          DeviceOffloadingKind == Action::OFK_SYCL ||
-          DeviceOffloadingKind == Action::OFK_Cuda) &&
-         "Only OpenMP, SYCL or CUDA offloading kinds are supported for NVIDIA GPUs.");
+//  assert((DeviceOffloadingKind == Action::OFK_OpenMP ||
+//          DeviceOffloadingKind == Action::OFK_SYCL ||
+//          DeviceOffloadingKind == Action::OFK_Cuda) &&
+//         "Only OpenMP, SYCL or CUDA offloading kinds are supported for NVIDIA GPUs.");
 
-  if (DeviceOffloadingKind == Action::OFK_Cuda) {
+  if (DeviceOffloadingKind /*==*/& Action::OFK_Cuda) {
     CC1Args.append(
         {"-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
 
@@ -744,7 +744,7 @@ void CudaToolChain::addClangTargetOptions(
       CC1Args.push_back("-fcuda-approx-transcendentals");
   }
 
-  if (DeviceOffloadingKind == Action::OFK_SYCL) {
+  if (DeviceOffloadingKind /*==*/ & Action::OFK_SYCL) {
     toolchains::SYCLToolChain::AddSYCLIncludeArgs(getDriver(), DriverArgs,
                                                   CC1Args);
 

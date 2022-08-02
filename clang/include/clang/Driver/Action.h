@@ -104,7 +104,8 @@ public:
     OFK_Cuda = 0x02,
     OFK_OpenMP = 0x04,
     OFK_HIP = 0x08,
-    OFK_SYCL = 0x10
+    OFK_SYCL = 0x10,
+    OFK_SYCL_CUDA = 0x12 
   };
 
   static const char *getClassName(ActionClass AC);

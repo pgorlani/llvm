@@ -3476,7 +3476,7 @@ class OffloadingActionBuilder final {
 
         for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
           pri(CudaDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), Ty, IA->getId())));
+              C.MakeAction<InputAction>(IA->getInputArg(), /*Ty*/types::TY_CXX, IA->getId())));
       std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
         }
 
@@ -3770,7 +3770,7 @@ class OffloadingActionBuilder final {
 
           for (auto &A : {AssembleAction, BackendAction}) {
             OffloadAction::DeviceDependences DDep;
-            DDep.add(*A, *ToolChains.front(), GpuArchList[I], Action::OFK_Cuda);
+            DDep.add(*A, *ToolChains.front(), GpuArchList[I], Action::OFK_SYCL_CUDA  /*Cuda*/);
             pri(DeviceActions.push_back(
                 C.MakeAction<OffloadAction>(DDep, A->getType())));
           }
@@ -4411,8 +4411,8 @@ class OffloadingActionBuilder final {
       }
 
       // Point 6
-//      if (SYCLDeviceActions.empty() && !ExternalCudaAction)
-//        return ABRT_Inactive;
+      //if (SYCLDeviceActions.empty() && !ExternalCudaAction)
+      //  return ABRT_Inactive;
 
 
       // Device compilation generates LLVM BC.
@@ -4609,8 +4609,8 @@ std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
         SYCLDeviceActions.clear();
 
         // Point 6
-        //if (IA->getType() == types::TY_CUDA)
-        //  return ABRT_Inactive;
+        if (IA->getType() == types::TY_CUDA)
+          return ABRT_Inactive;
  
         // Options that are considered LinkerInput are not valid input actions
         // to the device tool chain.
@@ -4631,7 +4631,7 @@ std::cerr<<__FILE__<<__LINE__<<" SYCLDeviceActions "<<SYCLDeviceActions.size()
         for (auto &TargetInfo : SYCLTargetInfoList) {
           (void)TargetInfo;
           pri(SYCLDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), (IA->getType() == types::TY_CUDA) ? types::TY_CXX : IA->getType())));
+              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType())));
         }
 
         if (IA->getType() == types::TY_CUDA)
@@ -6109,7 +6109,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
       if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
-          types::isSrcFile(I.first)) && I.first != types::TY_CUDA) { /*Point 7*/
+          types::isSrcFile(I.first)) && I.first != types::TY_CUDA && I.first != types::TY_CUDA_DEVICE) { /*Point 7*/
         // Unique ID is generated for source files and preprocessed files.
         SmallString<128> ResultID;
         llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
@@ -6229,7 +6229,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
           !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
-          I.first != types::TY_CUDA ) { /* Point 7*/
+          I.first != types::TY_CUDA && I.first != types::TY_CUDA_DEVICE) { /* Point 7*/
         pri(Action *PreprocessAction =
             C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies));
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,

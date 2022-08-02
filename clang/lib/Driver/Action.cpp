@@ -88,8 +88,8 @@ void Action::propagateDeviceOffloadInfo(OffloadKind OKind, const char *OArch) {
   if (OffloadingDeviceKind==OFK_SYCL) std::cerr<<"SYCL";
   if (OffloadingDeviceKind==OFK_Cuda) std::cerr<<"CUDA";
   std::cerr<<std::endl;
-  assert((OffloadingDeviceKind == OKind || OffloadingDeviceKind == OFK_None) &&
-         "Setting device kind to a different device??");
+//  assert((OffloadingDeviceKind == OKind || OffloadingDeviceKind == OFK_None) &&
+//         "Setting device kind to a different device??");
   assert(!ActiveOffloadKindMask && "Setting a device kind in a host action??");
   OffloadingDeviceKind = OKind;
   OffloadingArch = OArch;
@@ -193,6 +193,9 @@ StringRef Action::GetOffloadKindName(OffloadKind Kind) {
     return "hip";
   case OFK_SYCL:
     return "sycl";
+  case OFK_SYCL_CUDA:
+    return "sycl-cuda";
+
 
     // TODO: Add other programming models here.
   }
