@@ -1962,7 +1962,7 @@ Sema::targetDiag(SourceLocation Loc, unsigned DiagID, FunctionDecl *FD) {
   if (LangOpts.OpenMP)
     return LangOpts.OpenMPIsDevice ? diagIfOpenMPDeviceCode(Loc, DiagID, FD)
                                    : diagIfOpenMPHostCode(Loc, DiagID, FD);
-  if (getLangOpts().CUDA)
+  if (getLangOpts().CUDA && !getLangOpts().SYCLIsDevice)
     return getLangOpts().CUDAIsDevice ? CUDADiagIfDeviceCode(Loc, DiagID)
                                       : CUDADiagIfHostCode(Loc, DiagID);
 
@@ -2058,7 +2058,7 @@ void Sema::checkTypeSupport(QualType Ty, SourceLocation Loc, ValueDecl *D) {
            !Context.getTargetInfo().hasIbm128Type()))
         LongDoubleMismatched = true;
     }
-#if 0
+
     if ((Ty->isFloat16Type() && !Context.getTargetInfo().hasFloat16Type()) ||
         ((Ty->isFloat128Type() ||
           (Ty->isRealFloatingType() && Context.getTypeSize(Ty) == 128)) &&
@@ -2083,7 +2083,6 @@ void Sema::checkTypeSupport(QualType Ty, SourceLocation Loc, ValueDecl *D) {
       if (D)
         targetDiag(D->getLocation(), diag::note_defined_here, FD) << D;
     }
-#endif
   };
 
   auto CheckType = [&](QualType Ty, bool IsRetTy = false) {
