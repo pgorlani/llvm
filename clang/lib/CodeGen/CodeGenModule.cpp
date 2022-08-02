@@ -1,4 +1,3 @@
-#include<iostream>
 //===--- CodeGenModule.cpp - Emit LLVM Code from ASTs for a Module --------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -3567,6 +3566,10 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
           addDeferredDeclToEmit(GD);
         return;
       }
+      // Do not emit __host__ function in SYCL device compilation.
+      if (isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>() && LangOpts.SYCLIsDevice)
+        return;
+
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
              "Expected Variable or Function");
     }
@@ -3636,13 +3639,6 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         GetAddrOfGlobalVar(VD);
       return;
     }
-  }
-
-  if (LangOpts.SYCLIsDevice && Global->hasAttr<CUDAHostAttr>())
-  {
-    StringRef MangledName = getMangledName(GD);
-    std::cerr<<__FILE__<<__LINE__<<MangledName.str()<<std::endl;
-    return;
   }
 
   // clang::ParseAST ensures that we emit the SYCL devices at the end, so
