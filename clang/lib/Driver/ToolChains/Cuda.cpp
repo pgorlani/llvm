@@ -1,3 +1,4 @@
+#include<iostream>
 //===--- Cuda.cpp - Cuda Tool and ToolChain Implementations -----*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -736,6 +737,7 @@ void CudaToolChain::addClangTargetOptions(
 //         "Only OpenMP, SYCL or CUDA offloading kinds are supported for NVIDIA GPUs.");
 
   if (DeviceOffloadingKind /*==*/& Action::OFK_Cuda) {
+    std::cerr<<__FILE__<<__LINE__<<std::endl;
     CC1Args.append(
         {"-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
 
@@ -745,6 +747,7 @@ void CudaToolChain::addClangTargetOptions(
   }
 
   if (DeviceOffloadingKind /*==*/ & Action::OFK_SYCL) {
+    std::cerr<<__FILE__<<__LINE__<<std::endl;
     toolchains::SYCLToolChain::AddSYCLIncludeArgs(getDriver(), DriverArgs,
                                                   CC1Args);
 

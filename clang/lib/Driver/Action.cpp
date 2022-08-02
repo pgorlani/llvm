@@ -196,7 +196,6 @@ StringRef Action::GetOffloadKindName(OffloadKind Kind) {
   case OFK_SYCL_CUDA:
     return "sycl-cuda";
 
-
     // TODO: Add other programming models here.
   }
 

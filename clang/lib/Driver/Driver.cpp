@@ -3476,7 +3476,7 @@ class OffloadingActionBuilder final {
 
         for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
           pri(CudaDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), /*Ty*/types::TY_CXX, IA->getId())));
+              C.MakeAction<InputAction>(IA->getInputArg(), Ty/*types::TY_CXX*/, IA->getId())));
       std::cerr<<" ++++ "<<__FILE__<<": "<<__LINE__<<" "<<__func__<<" "<<CudaDeviceActions.size()<<std::endl;
         }
 
