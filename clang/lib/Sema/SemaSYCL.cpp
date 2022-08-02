@@ -1,4 +1,3 @@
-#include<iostream>
 //===- SemaSYCL.cpp - Semantic Analysis for SYCL constructs ---------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -4486,7 +4485,6 @@ Sema::SYCLDiagIfDeviceCode(SourceLocation Loc, unsigned DiagID,
                            DeviceDiagnosticReason Reason) {
   assert(getLangOpts().SYCLIsDevice &&
          "Should only be called during SYCL compilation");
-//std::cerr<<__FILE__<<__LINE__<<std::endl;
   FunctionDecl *FD = dyn_cast<FunctionDecl>(getCurLexicalContext());
   SemaDiagnosticBuilder::Kind DiagKind = [this, FD, Reason] {
     if (DiagnosingSYCLKernel)
@@ -4511,8 +4509,6 @@ bool Sema::checkSYCLDeviceFunction(SourceLocation Loc, FunctionDecl *Callee) {
          "Should only be called during SYCL compilation");
   assert(Callee && "Callee may not be null.");
 
-//std::cerr<<__FILE__<<__LINE__<<std::endl;
-
   // Errors in an unevaluated context don't need to be generated,
   // so we can safely skip them.
   if (isUnevaluatedContext() || isConstantEvaluated())
@@ -4527,11 +4523,11 @@ bool Sema::checkSYCLDeviceFunction(SourceLocation Loc, FunctionDecl *Callee) {
 
   // TODO Set DiagKind to K_Immediate/K_Deferred to emit diagnostics for Callee
   SemaDiagnosticBuilder(DiagKind, Loc, diag::err_sycl_restrict, Caller, *this,
-                        DeviceDiagnosticReason::Sycl|DeviceDiagnosticReason::CudaDevice|DeviceDiagnosticReason::CudaHost)
+                        DeviceDiagnosticReason::Sycl)
       << Sema::KernelCallUndefinedFunction;
   SemaDiagnosticBuilder(DiagKind, Callee->getLocation(),
                         diag::note_previous_decl, Caller, *this,
-                        DeviceDiagnosticReason::Sycl|DeviceDiagnosticReason::CudaDevice|DeviceDiagnosticReason::CudaHost)
+                        DeviceDiagnosticReason::Sycl)
       << Callee;
 
   return DiagKind != SemaDiagnosticBuilder::K_Immediate &&
