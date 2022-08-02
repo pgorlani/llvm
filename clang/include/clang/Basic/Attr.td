@@ -1185,7 +1185,7 @@ def CUDACudartBuiltin : IgnoredAttr {
 def CUDADevice : InheritableAttr {
   let Spellings = [GNU<"device">, Declspec<"__device__">];
   let Subjects = SubjectList<[Function, Var]>;
-  let LangOpts = [CUDA, SYCLIsDevice];
+  let LangOpts = [CUDA];
   let Documentation = [Undocumented];
 }
 
@@ -1219,7 +1219,7 @@ def : MutualExclusions<[CUDADeviceBuiltinSurfaceType,
 def CUDAGlobal : InheritableAttr {
   let Spellings = [GNU<"global">, Declspec<"__global__">];
   let Subjects = SubjectList<[Function]>;
-  let LangOpts = [CUDA, SYCLIsDevice];
+  let LangOpts = [CUDA];
   let Documentation = [Undocumented];
 }
 def : MutualExclusions<[CUDADevice, CUDAGlobal]>;
