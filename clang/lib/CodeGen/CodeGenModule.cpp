@@ -3338,7 +3338,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         StringRef MangledName = getMangledName(GD);
         const auto *F = cast<FunctionDecl>(GD.getDecl());
 //        std::cerr<<__FILE__<<" "<<__LINE__<<" "<<MangledName.str()<<" "
-                 <<F->hasBody()<<" "<<F->getBody()<<std::endl;
+//                 <<F->hasBody()<<" "<<F->getBody()<<std::endl;
   
         if (LangOpts.SYCLIsHost && MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
 //          std::cerr<<__FILE__<<" "<<__LINE__<<std::endl;
