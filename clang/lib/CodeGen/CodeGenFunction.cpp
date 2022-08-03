@@ -1422,11 +1422,11 @@ void CodeGenFunction::EmitFunctionBody(const Stmt *Body) {
   incrementProfileCounter(Body);
   if (const CompoundStmt *S = dyn_cast<CompoundStmt>(Body))
 {
-    std::cerr<<__FILE__<<__LINE__<<std::endl;
+//    std::cerr<<__FILE__<<__LINE__<<std::endl;
     EmitCompoundStmtWithoutScope(*S);
 }  else
 {
-    std::cerr<<__FILE__<<__LINE__<<std::endl;
+//    std::cerr<<__FILE__<<__LINE__<<std::endl;
     EmitStmt(Body);
 }
   // This is checked after emitting the function body so we know if there
@@ -1632,28 +1632,28 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   if (Body && isa_and_nonnull<CoroutineBodyStmt>(Body))
     llvm::append_range(FnArgs, FD->parameters());
 
-std::cerr<<__FILE__<<" "<<__LINE__<<" "<<__func__<<std::endl;
+//std::cerr<<__FILE__<<" "<<__LINE__<<" "<<__func__<<std::endl;
   // Generate the body of the function.
   PGO.assignRegionCounters(GD, CurFn);
   if (isa<CXXDestructorDecl>(FD))
 {
-    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
+//    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
     EmitDestructorBody(Args);
 }  else if (isa<CXXConstructorDecl>(FD)) {
-    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
+//    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
     EmitConstructorBody(Args);
 }  else if (getLangOpts().CUDA &&
            !getLangOpts().CUDAIsDevice &&
            FD->hasAttr<CUDAGlobalAttr>())
 {
-    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
+//    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
     CGM.getCUDARuntime().emitDeviceStub(*this, Args); // < -- this goes to CGCUDANV.cpp
 }  else if (getLangOpts().CUDA &&
            !getLangOpts().CUDAIsDevice &&
            !FD->hasAttr<CUDAHostAttr>() &&
            FD->hasAttr<CUDADeviceAttr>())
 {
-    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
+//    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
 
     if (FD->getReturnType()->isVoidType()) {
       Builder.CreateRetVoid();
@@ -1671,12 +1671,12 @@ std::cerr<<__FILE__<<" "<<__LINE__<<" "<<__func__<<std::endl;
   } else if (FD->isDefaulted() && isa<CXXMethodDecl>(FD) &&
              (cast<CXXMethodDecl>(FD)->isCopyAssignmentOperator() ||
               cast<CXXMethodDecl>(FD)->isMoveAssignmentOperator())) {
-    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
+//    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
     // Implicit copy-assignment gets the same special treatment as implicit
     // copy-constructors.
     emitImplicitAssignmentOperatorBody(Args);
   } else if (Body) {
-    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
+//    std::cerr<<__FILE__<<" "<<__LINE__<<""<<__func__<<std::endl;
     EmitFunctionBody(Body);
   } else
     llvm_unreachable("no definition for emitted function");
