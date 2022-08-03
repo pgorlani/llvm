@@ -300,6 +300,7 @@ image_impl<Dimensions>::image_impl(
 
 template <int Dimensions>
 void *image_impl<Dimensions>::allocateMem(ContextImplPtr Context,
+                                          DeviceImplPtr Device,
                                           bool InitFromUserData, void *HostPtr,
                                           RT::PiEvent &OutEventToWait) {
   bool HostPtrReadOnly = false;
@@ -314,9 +315,9 @@ void *image_impl<Dimensions>::allocateMem(ContextImplPtr Context,
          "The check an image format failed.");
 
   return MemoryManager::allocateMemImage(
-      std::move(Context), this, HostPtr, HostPtrReadOnly, BaseT::getSize(),
-      Desc, Format, BaseT::MInteropEvent, BaseT::MInteropContext, MProps,
-      OutEventToWait);
+      std::move(Context), std::move(Device), this, HostPtr, HostPtrReadOnly,
+      BaseT::getSize(), Desc, Format, BaseT::MInteropEvent,
+      BaseT::MInteropContext, MProps, OutEventToWait);
 }
 
 template <int Dimensions>
