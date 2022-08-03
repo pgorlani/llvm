@@ -6109,7 +6109,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
       if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
-          types::isSrcFile(I.first)) && I.first != types::TY_CUDA && I.first != types::TY_CUDA_DEVICE) { /*Point 7*/
+          types::isSrcFile(I.first)) && /*I.first != types::TY_CUDA &&*/ I.first != types::TY_CUDA_DEVICE) { /*Point 7*/
         // Unique ID is generated for source files and preprocessed files.
         SmallString<128> ResultID;
         llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
@@ -6229,7 +6229,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
           !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
-          I.first != types::TY_CUDA && I.first != types::TY_CUDA_DEVICE) { /* Point 7*/
+          /*I.first != types::TY_CUDA &&*/ I.first != types::TY_CUDA_DEVICE) { /* Point 7*/
         pri(Action *PreprocessAction =
             C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies));
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,
@@ -6561,7 +6561,7 @@ Action *Driver::ConstructPhaseAction(
     if (Args.hasArg(options::OPT_fsycl) && HostPPType != types::TY_INVALID &&
         !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
         TargetDeviceOffloadKind == Action::OFK_None &&
-        Input->getType() != types::TY_CUDA &&  /*Point 7*/
+        /*Input->getType() != types::TY_CUDA &&*/  /*Point 7*/
         Input->getType() != types::TY_CUDA_DEVICE) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
