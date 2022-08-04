@@ -2583,12 +2583,8 @@ pi_result cuda_piQueueFinish(pi_queue command_queue) {
     assert(command_queue !=
            nullptr); // need PI_ERROR_INVALID_EXTERNAL_HANDLE error code
 
-<<<<<<< HEAD
-    command_queue->sync_streams<true>([&result](CUstream s) {
-=======
     ScopedContext active(command_queue->get_native_context());
-    command_queue->sync_streams([&result](CUstream s) {
->>>>>>> 6264aa5bad3d ([LBNL_JUL_AUG] [SYCL][CUDA][PI][runtime][ABI-break] Add support for multi-device context #6446)
+    command_queue->sync_streams<true>([&result](CUstream s) {
       result = PI_CHECK_ERROR(cuStreamSynchronize(s));
     });
 
@@ -3948,8 +3944,7 @@ pi_result cuda_piEnqueueEventsWaitWithBarrier(pi_queue command_queue,
   pi_result result;
 
   try {
-<<<<<<< HEAD
-    ScopedContext active(command_queue->get_context());
+    ScopedContext active(command_queue->get_native_context());
     pi_uint32 stream_token;
     _pi_stream_guard guard;
     CUstream cuStream = command_queue->get_next_compute_stream(
@@ -3959,24 +3954,6 @@ pi_result cuda_piEnqueueEventsWaitWithBarrier(pi_queue command_queue,
       if (command_queue->barrier_event_ == nullptr) {
         PI_CHECK_ERROR(cuEventCreate(&command_queue->barrier_event_,
                                      CU_EVENT_DISABLE_TIMING));
-=======
-    ScopedContext active(command_queue->get_native_context());
-
-    if (event_wait_list) {
-      auto result =
-          forLatestEvents(event_wait_list, num_events_in_wait_list,
-                          [command_queue](pi_event event) -> pi_result {
-                            if (event->get_queue()->has_been_synchronized(
-                                    event->get_stream_token())) {
-                              return PI_SUCCESS;
-                            } else {
-                              return enqueueEventWait(command_queue, event);
-                            }
-                          });
-
-      if (result != PI_SUCCESS) {
-        return result;
->>>>>>> 6264aa5bad3d ([LBNL_JUL_AUG] [SYCL][CUDA][PI][runtime][ABI-break] Add support for multi-device context #6446)
       }
       if (num_events_in_wait_list == 0) { //  wait on all work
         if (command_queue->barrier_tmp_event_ == nullptr) {
@@ -5230,14 +5207,9 @@ pi_result cuda_piextUSMEnqueueMemAdvise(pi_queue queue, const void *ptr,
   if (advice == PI_MEM_ADVICE_CUDA_SET_PREFERRED_LOCATION ||
       advice == PI_MEM_ADVICE_CUDA_UNSET_PREFERRED_LOCATION ||
       advice == PI_MEM_ADVICE_CUDA_SET_ACCESSED_BY ||
-<<<<<<< HEAD
       advice == PI_MEM_ADVICE_CUDA_UNSET_ACCESSED_BY ||
       advice == PI_MEM_ADVICE_RESET) {
-    pi_device device = queue->get_context()->get_device();
-=======
-      advice == PI_MEM_ADVICE_CUDA_UNSET_ACCESSED_BY) {
     pi_device device = queue->get_device();
->>>>>>> 6264aa5bad3d ([LBNL_JUL_AUG] [SYCL][CUDA][PI][runtime][ABI-break] Add support for multi-device context #6446)
     if (!getAttribute(device, CU_DEVICE_ATTRIBUTE_CONCURRENT_MANAGED_ACCESS)) {
       setErrorMessage("Mem advise ignored as device does not support "
                       "concurrent managed access",
@@ -5288,13 +5260,13 @@ pi_result cuda_piextUSMEnqueueMemAdvise(pi_queue queue, const void *ptr,
     case PI_MEM_ADVICE_RESET:
       PI_CHECK_ERROR(cuMemAdvise((CUdeviceptr)ptr, length,
                                  CU_MEM_ADVISE_UNSET_READ_MOSTLY,
-                                 queue->get_context()->get_device()->get()));
+                                 queue->get_device()->get()));
       PI_CHECK_ERROR(cuMemAdvise((CUdeviceptr)ptr, length,
                                  CU_MEM_ADVISE_UNSET_PREFERRED_LOCATION,
-                                 queue->get_context()->get_device()->get()));
+                                 queue->get_device()->get()));
       PI_CHECK_ERROR(cuMemAdvise((CUdeviceptr)ptr, length,
                                  CU_MEM_ADVISE_UNSET_ACCESSED_BY,
-                                 queue->get_context()->get_device()->get()));
+                                 queue->get_device()->get()));
       break;
     default:
       cl::sycl::detail::pi::die("Unknown advice");

@@ -548,17 +548,13 @@ struct _pi_queue {
     }
   }
 
-<<<<<<< HEAD
-  template <bool ResetUsed = false, typename T> void sync_streams(T &&f) {
-=======
   CUcontext get_native_context() {
     CUcontext res = context_->get(device_);
     assert(res != nullptr);
     return res;
   }
 
-  template <typename T> void sync_streams(T &&f) {
->>>>>>> 6264aa5bad3d ([LBNL_JUL_AUG] [SYCL][CUDA][PI][runtime][ABI-break] Add support for multi-device context #6446)
+  template <bool ResetUsed = false, typename T> void sync_streams(T &&f) {
     auto sync_compute = [&f, &streams = compute_streams_,
                          &delay = delay_compute_](unsigned int start,
                                                   unsigned int stop) {
