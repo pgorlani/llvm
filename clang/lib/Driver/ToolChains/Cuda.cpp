@@ -742,14 +742,14 @@ void CudaToolChain::addClangTargetOptions(
 
   if (DeviceOffloadingKind == Action::OFK_Cuda) {
     CC1Args.append(
-        {"-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
+        {"-fsycl-is-device","-fdeclare-spirv-builtins", "-aux-triple","x86_64-unknown-linux-gnu","-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
 
     if (DriverArgs.hasFlag(options::OPT_fcuda_approx_transcendentals,
                            options::OPT_fno_cuda_approx_transcendentals, false))
       CC1Args.push_back("-fcuda-approx-transcendentals");
   }
 
-  if (DeviceOffloadingKind == Action::OFK_SYCL) {
+  if (DeviceOffloadingKind == Action::OFK_SYCL || DeviceOffloadingKind == Action::OFK_Cuda) {
     toolchains::SYCLToolChain::AddSYCLIncludeArgs(getDriver(), DriverArgs,
                                                   CC1Args);
 
