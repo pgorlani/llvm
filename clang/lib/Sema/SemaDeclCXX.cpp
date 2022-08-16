@@ -15633,8 +15633,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
              DeclInitType->getBaseElementTypeUnsafe()->getAsCXXRecordDecl()) &&
          "given constructor for wrong type");
   MarkFunctionReferenced(ConstructLoc, Constructor);
-//  if (getLangOpts().CUDA && !CheckCUDACall(ConstructLoc, Constructor))
-//    return ExprError();
+  if (getLangOpts().CUDA && !CheckCUDACall(ConstructLoc, Constructor))
+    return ExprError();
   if (getLangOpts().SYCLIsDevice &&
       !checkSYCLDeviceFunction(ConstructLoc, Constructor))
     return ExprError();
