@@ -2562,6 +2562,9 @@ static TryCastResult TryAddressSpaceCast(Sema &Self, ExprResult &SrcExpr,
                                          QualType DestType, bool CStyle,
                                          unsigned &msg, CastKind &Kind,
                                          SourceRange OpRange) {
+  if (Self.getLangOpts().CUDA && Self.getLangOpts().SYCLIsDevice)
+    return TC_NotApplicable;
+
   if (!Self.getLangOpts().OpenCL && !Self.getLangOpts().SYCLIsDevice)
     // FIXME: As compiler doesn't have any information about overlapping addr
     // spaces at the moment we have to be permissive here.
@@ -2581,10 +2584,10 @@ static TryCastResult TryAddressSpaceCast(Sema &Self, ExprResult &SrcExpr,
     return TC_NotApplicable;
   auto SrcPointeeType = SrcPtrType->getPointeeType();
   auto DestPointeeType = DestPtrType->getPointeeType();
-//  if (!DestPointeeType.isAddressSpaceOverlapping(SrcPointeeType)) {
-//    msg = diag::err_bad_cxx_cast_addr_space_mismatch;
-//    return TC_Failed;
-//  }
+  if (!DestPointeeType.isAddressSpaceOverlapping(SrcPointeeType)) {
+    msg = diag::err_bad_cxx_cast_addr_space_mismatch;
+    return TC_Failed;
+  }
   if (Self.getLangOpts().SYCLIsDevice) {
     Qualifiers SrcQ = SrcPointeeType.getQualifiers();
     Qualifiers DestQ = DestPointeeType.getQualifiers();
