@@ -4646,13 +4646,13 @@ void Sema::finalizeSYCLDelayedAnalysis(const FunctionDecl *Caller,
   // Diagnose if this is an undefined function and it is not a builtin.
   // Currently, there is an exception of "__failed_assertion" in libstdc++-11,
   // this undefined function is used to trigger a compiling error.
-//  if (!Callee->isDefined() && !Callee->getBuiltinID() &&
-//      !Callee->isReplaceableGlobalAllocationFunction() &&
-//      !isSYCLUndefinedAllowed(Callee, getSourceManager())) {
-//    Diag(Loc, diag::err_sycl_restrict) << Sema::KernelCallUndefinedFunction;
-//    Diag(Callee->getLocation(), diag::note_previous_decl) << Callee;
-//    Diag(Caller->getLocation(), diag::note_called_by) << Caller;
-//  }
+  if (!Callee->isDefined() && !Callee->getBuiltinID() &&
+      !Callee->isReplaceableGlobalAllocationFunction() &&
+      !isSYCLUndefinedAllowed(Callee, getSourceManager())) {
+    Diag(Loc, diag::err_sycl_restrict) << Sema::KernelCallUndefinedFunction;
+    Diag(Callee->getLocation(), diag::note_previous_decl) << Callee;
+    Diag(Caller->getLocation(), diag::note_called_by) << Caller;
+  }
 }
 
 bool Sema::checkAllowedSYCLInitializer(VarDecl *VD) {
