@@ -349,7 +349,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, ArrayRef<SourceLocation> Locs,
         DeduceReturnType(FD, Loc))
       return true;
 
-    if (getLangOpts().CUDA && !getLangOpts().SYCLIsDevice && !CheckCUDACall(Loc, FD))
+    if (getLangOpts().CUDA && !getLangOpts().isSYCL() && !CheckCUDACall(Loc, FD))
       return true;
 
     if (getLangOpts().SYCLIsDevice && !checkSYCLDeviceFunction(Loc, FD))
@@ -18142,7 +18142,7 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func,
        Func->getMemberSpecializationInfo()))
     checkSpecializationReachability(Loc, Func);
 
-  if (getLangOpts().CUDA && !getLangOpts().SYCLIsDevice)
+  if(getLangOpts().CUDA && !getLangOpts().isSYCL() )
     CheckCUDACall(Loc, Func);
   if (getLangOpts().SYCLIsDevice)
     checkSYCLDeviceFunction(Loc, Func);
