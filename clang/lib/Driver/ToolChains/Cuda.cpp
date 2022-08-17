@@ -750,7 +750,7 @@ void CudaToolChain::addClangTargetOptions(
 
   if (DeviceOffloadingKind == Action::OFK_Cuda) {
     CC1Args.append(
-        {"-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
+        {"-fsycl-is-host", "-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
 
     if (DriverArgs.hasFlag(options::OPT_fcuda_approx_transcendentals,
                            options::OPT_fno_cuda_approx_transcendentals, false))
