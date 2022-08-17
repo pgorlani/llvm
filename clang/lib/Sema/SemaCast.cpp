@@ -2562,6 +2562,7 @@ static TryCastResult TryAddressSpaceCast(Sema &Self, ExprResult &SrcExpr,
                                          QualType DestType, bool CStyle,
                                          unsigned &msg, CastKind &Kind,
                                          SourceRange OpRange) {
+// __clang_cuda_intrinsics.h:489:18: error: C-style cast from 'const void *' to '__attribute__((address_space(1))) void *' converts between mismatching address spaces
   if (Self.getLangOpts().CUDA && Self.getLangOpts().SYCLIsDevice)
     return TC_NotApplicable;
 
