@@ -760,6 +760,8 @@ void CudaToolChain::addClangTargetOptions(
   if (DeviceOffloadingKind == Action::OFK_SYCL) {
     toolchains::SYCLToolChain::AddSYCLIncludeArgs(getDriver(), DriverArgs,
                                                   CC1Args);
+    CC1Args.push_back("-include");
+    CC1Args.push_back("__clang_cuda_runtime_wrapper.h");
 
     if (DriverArgs.hasArg(options::OPT_fsycl_fp32_prec_sqrt)) {
       CC1Args.push_back("-fcuda-prec-sqrt");
