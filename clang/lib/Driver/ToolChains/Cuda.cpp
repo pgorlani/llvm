@@ -750,18 +750,28 @@ void CudaToolChain::addClangTargetOptions(
 
   if (DeviceOffloadingKind == Action::OFK_Cuda) {
     CC1Args.append(
-        {"-fsycl-is-host", "-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
+        {"-fcuda-is-device", "-mllvm", "-enable-memcpyopt-without-libcalls"});
 
     if (DriverArgs.hasFlag(options::OPT_fcuda_approx_transcendentals,
                            options::OPT_fno_cuda_approx_transcendentals, false))
       CC1Args.push_back("-fcuda-approx-transcendentals");
+
+    if (DriverArgs.hasArg(options::OPT_fsycl))
+      // add this just if there is a .cu input for SYCL
+      CC1Args.push_back("-fsycl-is-host");
   }
 
   if (DeviceOffloadingKind == Action::OFK_SYCL) {
     toolchains::SYCLToolChain::AddSYCLIncludeArgs(getDriver(), DriverArgs,
                                                   CC1Args);
-    CC1Args.push_back("-include");
-    CC1Args.push_back("__clang_cuda_runtime_wrapper.h");
+
+    // probably, this needs to be moved in CudaToolChain::addClangTargetOptions
+    //if(DriverArgs.getLastArgValue(options::OPT_x).equals("cuda")) //<-- doesn't work
+    {
+      // add this just if there is a .cu input for SYCL
+      CC1Args.push_back("-include");
+      CC1Args.push_back("__clang_cuda_runtime_wrapper.h");
+    }
 
     if (DriverArgs.hasArg(options::OPT_fsycl_fp32_prec_sqrt)) {
       CC1Args.push_back("-fcuda-prec-sqrt");
