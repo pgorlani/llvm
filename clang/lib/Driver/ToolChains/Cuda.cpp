@@ -758,7 +758,7 @@ void CudaToolChain::addClangTargetOptions(
 
     if (DriverArgs.hasArg(options::OPT_fsycl))
       // add this just if there is a .cu input for SYCL
-      CC1Args.push_back("-fsycl-is-host");
+      CC1Args.append({"-std=c++17", "-fsycl-is-host"});
   }
 
   if (DeviceOffloadingKind == Action::OFK_SYCL) {
