@@ -6052,7 +6052,7 @@ public:
     // for that.
     OffloadAction::HostDependence HDep(
         *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
-        /*BoundArch=*/nullptr, DDeps);
+        /*BoundArch=*/nullptr, /*DDeps,*/ Action::OFK_SYCL|Action::OFK_Cuda);
     return C.MakeAction<OffloadAction>(HDep, DDeps);
   }
 
