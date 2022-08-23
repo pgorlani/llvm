@@ -6623,17 +6623,17 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     }
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
-      if (I.first != types::TY_CUDA) {
-        if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
-             types::isSrcFile(I.first))) {
-          // Unique ID is generated for source files and preprocessed files.
-          SmallString<128> ResultID;
-          llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
-          addSYCLUniqueID(Args.MakeArgString(ResultID.str()), SrcFileName);
-        }
-        if (!types::isSrcFile(I.first))
-          continue;
+      //if (I.first != types::TY_CUDA) {
+      if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
+           types::isSrcFile(I.first))) {
+        // Unique ID is generated for source files and preprocessed files.
+        SmallString<128> ResultID;
+        llvm::sys::fs::createUniquePath("%%%%%%%%%%%%%%%%", ResultID, false);
+        addSYCLUniqueID(Args.MakeArgString(ResultID.str()), SrcFileName);
       }
+      if (!types::isSrcFile(I.first))
+        continue;
+      //}
 
       std::string TmpFileNameHeader;
       std::string TmpFileNameFooter;
@@ -6749,8 +6749,8 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       // TODO: Support SYCL offloading with CUDA files
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
-          !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
-          I.first != types::TY_CUDA) {
+          !Args.hasArg(options::OPT_fno_sycl_use_footer) /*&&
+          I.first != types::TY_CUDA*/) {
         Action *PreprocessAction =
             C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies);
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,
@@ -7293,12 +7293,12 @@ Action *Driver::ConstructPhaseAction(
     if (Args.hasArg(options::OPT_fsycl) && HostPPType != types::TY_INVALID &&
         !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
         TargetDeviceOffloadKind == Action::OFK_None &&
-        Input->getType() != types::TY_CUDA &&
+     /*   Input->getType() != types::TY_CUDA &&*/
         Input->getType() != types::TY_CUDA_DEVICE) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
       auto *AppendFooter =
-          C.MakeAction<AppendFooterJobAction>(Input, types::TY_CXX);
+          C.MakeAction<AppendFooterJobAction>(Input, (Input->getType() == types::TY_CUDA) ?  types::TY_CUDA : types::TY_CXX);
       // FIXME: There are 2 issues with dependency generation in regards to
       // the integration footer that need to be addressed.
       // 1) Input file referenced on the RHS of a dependency is based on the
