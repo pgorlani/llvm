@@ -6048,11 +6048,25 @@ public:
     if (DDeps.getActions().empty())
       return HostAction;
 
+    bool IsCUinSYCL = false;
+    for (auto &I : InputArgToOffloadKindMap) {
+      if (I.second == (Action::OFK_Cuda | Action::OFK_SYCL)) {
+        IsCUinSYCL = true;
+      }
+    }
+
+    if(IsCUinSYCL){
+      OffloadAction::HostDependence HDep(
+          *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
+          /*BoundArch=*/nullptr, Action::OFK_SYCL|Action::OFK_Cuda);
+      return C.MakeAction<OffloadAction>(HDep, DDeps);
+    }
+
     // We have dependences we need to bundle together. We use an offload action
     // for that.
     OffloadAction::HostDependence HDep(
         *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
-        /*BoundArch=*/nullptr, /*DDeps,*/ Action::OFK_SYCL|Action::OFK_Cuda);
+        /*BoundArch=*/nullptr,  DDeps);
     return C.MakeAction<OffloadAction>(HDep, DDeps);
   }
 
