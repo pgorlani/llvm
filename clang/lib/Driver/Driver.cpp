@@ -5101,17 +5101,43 @@ class OffloadingActionBuilder final {
         // Append all device actions followed by the proper offload action.
         for (auto TargetActionInfo :
              llvm::zip(SYCLDeviceActions, SYCLTargetInfoList)) {
-          Action *A = std::get<0>(TargetActionInfo);
-          DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
 
-          OffloadAction::DeviceDependences Dep;
-          Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
-          AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+          if (ExternalCudaAction) {
+            assert(SYCLTargetInfoList.size() == 1 &&
+                   "Number of SYCL actions and toolchains/boundarch pairs do not "
+                   "match.");
+            Action *A = std::get<0>(TargetActionInfo);
+            DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
+   
+            OffloadAction::DeviceDependences Dep;
+            Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
+            
+            ActionList AAAA;
+            AAAA.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+            AAAA.push_back(ExternalCudaAction);
+ 
+            auto *ALINK = C.MakeAction<LinkJobAction>(AAAA, types::TY_LLVM_BC);
+            // AL.push_back(ALINK);
+            ExternalCudaAction = nullptr;
+ 
+            OffloadAction::DeviceDependences Dep2;
+            Dep2.add(*ALINK, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
+            AL.push_back(C.MakeAction<OffloadAction>(Dep2, A->getType()));
+ 
+          } else {
+             Action *A = std::get<0>(TargetActionInfo);
+             DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
+ 
+             OffloadAction::DeviceDependences Dep;
+             Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
+             AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+          }
+
         }
         // We no longer need the action stored in this builder.
         SYCLDeviceActions.clear();
       }
-
+/*
       if (ExternalCudaAction) {
         assert(SYCLTargetInfoList.size() == 1 &&
                "Number of SYCL actions and toolchains/boundarch pairs do not "
@@ -5119,6 +5145,8 @@ class OffloadingActionBuilder final {
         AL.push_back(ExternalCudaAction);
         ExternalCudaAction = nullptr;
       }
+ */
+
     }
 
     bool addSYCLDeviceLibs(const ToolChain *TC, ActionList &DeviceLinkObjects,
