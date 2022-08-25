@@ -5010,10 +5010,6 @@ class OffloadingActionBuilder final {
       if (auto *IA = dyn_cast<InputAction>(HostAction)) {
         SYCLDeviceActions.clear();
 
-        // Skip CUDA Actions
-        //if (IA->getType() == types::TY_CUDA)
-        //  return ABRT_Inactive;
-
         // Options that are considered LinkerInput are not valid input actions
         // to the device tool chain.
         if (IA->getInputArg().getOption().hasFlag(options::LinkerInput))
@@ -5033,7 +5029,7 @@ class OffloadingActionBuilder final {
         for (auto &TargetInfo : SYCLTargetInfoList) {
           (void)TargetInfo;
           SYCLDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), /*(IA->getType() == types::TY_CUDA) ? types::TY_CXX :*/ IA->getType()));
+              C.MakeAction<InputAction>(IA->getInputArg(), IA->getType()));
         }
         return ABRT_Success;
       }
@@ -5137,15 +5133,6 @@ class OffloadingActionBuilder final {
         // We no longer need the action stored in this builder.
         SYCLDeviceActions.clear();
       }
-/*
-      if (ExternalCudaAction) {
-        assert(SYCLTargetInfoList.size() == 1 &&
-               "Number of SYCL actions and toolchains/boundarch pairs do not "
-               "match.");
-        AL.push_back(ExternalCudaAction);
-        ExternalCudaAction = nullptr;
-      }
- */
 
     }
 
@@ -6094,7 +6081,7 @@ public:
     // for that.
     OffloadAction::HostDependence HDep(
         *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
-        /*BoundArch=*/nullptr,  DDeps);
+        /*BoundArch=*/nullptr, DDeps);
     return C.MakeAction<OffloadAction>(HDep, DDeps);
   }
 
@@ -6651,7 +6638,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     }
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
-      //if (I.first != types::TY_CUDA) {
+
       if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
            types::isSrcFile(I.first))) {
         // Unique ID is generated for source files and preprocessed files.
@@ -6661,7 +6648,6 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       }
       if (!types::isSrcFile(I.first))
         continue;
-      //}
 
       std::string TmpFileNameHeader;
       std::string TmpFileNameFooter;
@@ -6774,11 +6760,9 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       // When performing -fsycl based compilations and generating dependency
       // information, perform a specific dependency generation compilation which
       // is not based on the source + footer compilation.
-      // TODO: Support SYCL offloading with CUDA files
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
-          !Args.hasArg(options::OPT_fno_sycl_use_footer) /*&&
-          I.first != types::TY_CUDA*/) {
+          !Args.hasArg(options::OPT_fno_sycl_use_footer) ) {
         Action *PreprocessAction =
             C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies);
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,
@@ -7317,11 +7301,9 @@ Action *Driver::ConstructPhaseAction(
              "Cannot preprocess this input type!");
     }
     types::ID HostPPType = types::getPreprocessedType(Input->getType());
-    // TODO: Support SYCL offloading with CUDA files
     if (Args.hasArg(options::OPT_fsycl) && HostPPType != types::TY_INVALID &&
         !Args.hasArg(options::OPT_fno_sycl_use_footer) &&
         TargetDeviceOffloadKind == Action::OFK_None &&
-     /*   Input->getType() != types::TY_CUDA &&*/
         Input->getType() != types::TY_CUDA_DEVICE) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
