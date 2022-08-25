@@ -1789,7 +1789,8 @@ public:
         (ShouldEmitRootNode || InOMPDeviceContext))
       S.finalizeOpenMPDelayedAnalysis(Caller, FD, Loc);
     // Finalize analysis of SYCL-specific constructs.
-    // error: SYCL kernel cannot call an undefined function without SYCL_EXTERNAL attribute
+    // error: SYCL kernel cannot call an undefined function without
+    // SYCL_EXTERNAL attribute
     if (Caller && S.LangOpts.SYCLIsDevice && !S.LangOpts.CUDA)
       S.finalizeSYCLDelayedAnalysis(Caller, FD, Loc, RootReason);
     if (Caller)
@@ -1963,7 +1964,8 @@ Sema::targetDiag(SourceLocation Loc, unsigned DiagID, FunctionDecl *FD) {
   if (LangOpts.OpenMP)
     return LangOpts.OpenMPIsDevice ? diagIfOpenMPDeviceCode(Loc, DiagID, FD)
                                    : diagIfOpenMPHostCode(Loc, DiagID, FD);
-  // error: '__val' requires 128 bit size 'long double' type support, but target 'nvptx64-nvidia-cuda' does not support it
+  // error: '__val' requires 128 bit size 'long double' type support, but target
+  // 'nvptx64-nvidia-cuda' does not support it
   if (getLangOpts().SYCLIsDevice)
     return SYCLDiagIfDeviceCode(Loc, DiagID);
 

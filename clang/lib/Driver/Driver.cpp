@@ -5099,41 +5099,41 @@ class OffloadingActionBuilder final {
              llvm::zip(SYCLDeviceActions, SYCLTargetInfoList)) {
 
           if (ExternalCudaAction) {
-            assert(SYCLTargetInfoList.size() == 1 &&
-                   "Number of SYCL actions and toolchains/boundarch pairs do not "
-                   "match.");
+            assert(
+                SYCLTargetInfoList.size() == 1 &&
+                "Number of SYCL actions and toolchains/boundarch pairs do not "
+                "match.");
             Action *A = std::get<0>(TargetActionInfo);
             DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
-   
+
             OffloadAction::DeviceDependences Dep;
             Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
-            
+
             ActionList AAAA;
             AAAA.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
             AAAA.push_back(ExternalCudaAction);
- 
+
             auto *ALINK = C.MakeAction<LinkJobAction>(AAAA, types::TY_LLVM_BC);
             // AL.push_back(ALINK);
             ExternalCudaAction = nullptr;
- 
-            OffloadAction::DeviceDependences Dep2;
-            Dep2.add(*ALINK, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
-            AL.push_back(C.MakeAction<OffloadAction>(Dep2, A->getType()));
- 
-          } else {
-             Action *A = std::get<0>(TargetActionInfo);
-             DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
- 
-             OffloadAction::DeviceDependences Dep;
-             Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
-             AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
-          }
 
+            OffloadAction::DeviceDependences Dep2;
+            Dep2.add(*ALINK, *TargetInfo.TC, TargetInfo.BoundArch,
+                     Action::OFK_SYCL);
+            AL.push_back(C.MakeAction<OffloadAction>(Dep2, A->getType()));
+
+          } else {
+            Action *A = std::get<0>(TargetActionInfo);
+            DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
+
+            OffloadAction::DeviceDependences Dep;
+            Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
+            AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+          }
         }
         // We no longer need the action stored in this builder.
         SYCLDeviceActions.clear();
       }
-
     }
 
     bool addSYCLDeviceLibs(const ToolChain *TC, ActionList &DeviceLinkObjects,
@@ -6070,10 +6070,10 @@ public:
       }
     }
 
-    if(IsCUinSYCL){
+    if (IsCUinSYCL) {
       OffloadAction::HostDependence HDep(
           *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
-          /*BoundArch=*/nullptr, Action::OFK_SYCL|Action::OFK_Cuda);
+          /*BoundArch=*/nullptr, Action::OFK_SYCL | Action::OFK_Cuda);
       return C.MakeAction<OffloadAction>(HDep, DDeps);
     }
 
@@ -6762,7 +6762,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
       // is not based on the source + footer compilation.
       if (Phase == phases::Preprocess && Args.hasArg(options::OPT_fsycl) &&
           Args.hasArg(options::OPT_M_Group) &&
-          !Args.hasArg(options::OPT_fno_sycl_use_footer) ) {
+          !Args.hasArg(options::OPT_fno_sycl_use_footer)) {
         Action *PreprocessAction =
             C.MakeAction<PreprocessJobAction>(Current, types::TY_Dependencies);
         PreprocessAction->propagateHostOffloadInfo(Action::OFK_SYCL,
@@ -7307,8 +7307,9 @@ Action *Driver::ConstructPhaseAction(
         Input->getType() != types::TY_CUDA_DEVICE) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
-      auto *AppendFooter =
-          C.MakeAction<AppendFooterJobAction>(Input, (Input->getType() == types::TY_CUDA) ?  types::TY_CUDA : types::TY_CXX);
+      auto *AppendFooter = C.MakeAction<AppendFooterJobAction>(
+          Input, (Input->getType() == types::TY_CUDA) ? types::TY_CUDA
+                                                      : types::TY_CXX);
       // FIXME: There are 2 issues with dependency generation in regards to
       // the integration footer that need to be addressed.
       // 1) Input file referenced on the RHS of a dependency is based on the
