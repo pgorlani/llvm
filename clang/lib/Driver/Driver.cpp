@@ -5098,36 +5098,33 @@ class OffloadingActionBuilder final {
         for (auto TargetActionInfo :
              llvm::zip(SYCLDeviceActions, SYCLTargetInfoList)) {
 
+          Action *A = std::get<0>(TargetActionInfo);
+          DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
+
+          OffloadAction::DeviceDependences Dep;
+          Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
+
           if (ExternalCudaAction) {
             assert(
                 SYCLTargetInfoList.size() == 1 &&
                 "Number of SYCL actions and toolchains/boundarch pairs do not "
                 "match.");
-            Action *A = std::get<0>(TargetActionInfo);
-            DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
 
-            OffloadAction::DeviceDependences Dep;
-            Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
+            // Link with external CUDA action.
+            ActionList LinkObjects;
+            LinkObjects.push_back(
+                C.MakeAction<OffloadAction>(Dep, A->getType()));
+            LinkObjects.push_back(ExternalCudaAction);
+            Action *DeviceLinkAction =
+                C.MakeAction<LinkJobAction>(LinkObjects, types::TY_LLVM_BC);
 
-            ActionList AAAA;
-            AAAA.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
-            AAAA.push_back(ExternalCudaAction);
-
-            auto *ALINK = C.MakeAction<LinkJobAction>(AAAA, types::TY_LLVM_BC);
-            // AL.push_back(ALINK);
-            ExternalCudaAction = nullptr;
-
-            OffloadAction::DeviceDependences Dep2;
-            Dep2.add(*ALINK, *TargetInfo.TC, TargetInfo.BoundArch,
+            OffloadAction::DeviceDependences DDep;
+            DDep.add(*DeviceLinkAction, *TargetInfo.TC, TargetInfo.BoundArch,
                      Action::OFK_SYCL);
-            AL.push_back(C.MakeAction<OffloadAction>(Dep2, A->getType()));
+            AL.push_back(C.MakeAction<OffloadAction>(DDep, A->getType()));
 
+            ExternalCudaAction = nullptr;
           } else {
-            Action *A = std::get<0>(TargetActionInfo);
-            DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
-
-            OffloadAction::DeviceDependences Dep;
-            Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
             AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
           }
         }
@@ -6063,14 +6060,8 @@ public:
     if (DDeps.getActions().empty())
       return HostAction;
 
-    bool IsCUinSYCL = false;
-    for (auto &I : InputArgToOffloadKindMap) {
-      if (I.second == (Action::OFK_Cuda | Action::OFK_SYCL)) {
-        IsCUinSYCL = true;
-      }
-    }
-
-    if (IsCUinSYCL) {
+    // Add host-cuda-sycl offload kind for the SYCL compilation of .cu files
+    if (OffloadKind == (Action::OFK_Cuda | Action::OFK_SYCL)) {
       OffloadAction::HostDependence HDep(
           *HostAction, *C.getSingleOffloadToolChain<Action::OFK_Host>(),
           /*BoundArch=*/nullptr, Action::OFK_SYCL | Action::OFK_Cuda);
