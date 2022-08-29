@@ -1313,6 +1313,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   }
   if (LangOpts.SYCLUnnamedLambda)
     Builder.defineMacro("__SYCL_UNNAMED_LAMBDA__");
+  if (LangOpts.CUDA) {
+    Builder.defineMacro("CUDA_EXTERNAL", "__attribute__((sycl_device))");
+  }
 
   // OpenCL definitions.
   if (LangOpts.OpenCL) {

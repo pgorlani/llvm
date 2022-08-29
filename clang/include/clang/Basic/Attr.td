@@ -1274,7 +1274,7 @@ def GlobalStorageNonLocalVar : SubsetSubject<Var,
 def SYCLDevice : InheritableAttr {
   let Spellings = [GNU<"sycl_device">];
   let Subjects = SubjectList<[Function, GlobalStorageNonLocalVar]>;
-  let LangOpts = [SYCLIsDevice, SilentlyIgnoreSYCLIsHost];
+  let LangOpts = [SYCLIsDevice, SilentlyIgnoreSYCLIsHost, CUDA];
   let Documentation = [SYCLDeviceDocs];
 }
 
