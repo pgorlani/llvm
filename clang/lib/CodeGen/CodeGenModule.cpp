@@ -3561,8 +3561,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         // In SYCL, every (CUDA) __device__ function needs to have a __host__
         // counterpart that will be emitted in case of it is not already
         // present.
-        if (LangOpts.SYCLIsHost && MustBeEmitted(Global) &&
-            MayBeEmittedEagerly(Global))
+        const auto *FD = cast<FunctionDecl>(GD.getDecl());
+        if (LangOpts.SYCLIsHost && ( MustBeEmitted(Global) || FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation ))
           addDeferredDeclToEmit(GD);
         return;
       }
