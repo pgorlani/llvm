@@ -3542,7 +3542,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // If this is CUDA, be selective about which declarations we emit.
   if (LangOpts.CUDA) {
     if (LangOpts.CUDAIsDevice) {
-      if(Global->hasAttr<SYCLDeviceAttr>())
+      // Emit every __device__ function having the sycl_device attribute.
+      if(Global->hasAttr<SYCLDeviceAttr>() && Global->hasAttr<CUDADeviceAttr>())
         addDeferredDeclToEmit(GD);
       if (!Global->hasAttr<CUDADeviceAttr>() &&
           !Global->hasAttr<CUDAGlobalAttr>() &&
@@ -3563,7 +3564,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         // In SYCL, every (CUDA) __device__ function needs to have a __host__
         // counterpart that will be emitted in case of it is not already
         // present.
-        if (LangOpts.SYCLIsHost && Global->hasAttr<SYCLDeviceAttr>())
+        if (LangOpts.SYCLIsHost && (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>()))
           addDeferredDeclToEmit(GD);
         return;
       }
