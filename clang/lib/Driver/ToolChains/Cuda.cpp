@@ -757,7 +757,7 @@ void CudaToolChain::addClangTargetOptions(
       CC1Args.push_back("-fcuda-approx-transcendentals");
 
     if (DriverArgs.hasArg(options::OPT_fsycl))
-      // add this just if there is a .cu input for SYCL
+      // Add these flags for .cu SYCL compilation.
       CC1Args.append({"-std=c++17", "-fsycl-is-host"});
   }
 
