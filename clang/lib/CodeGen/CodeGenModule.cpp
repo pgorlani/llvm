@@ -3543,7 +3543,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   if (LangOpts.CUDA) {
     if (LangOpts.CUDAIsDevice) {
       // Emit every __device__ function having the sycl_device attribute.
-      if(Global->hasAttr<SYCLDeviceAttr>() && Global->hasAttr<CUDADeviceAttr>())
+      if (Global->hasAttr<SYCLDeviceAttr>() &&
+          Global->hasAttr<CUDADeviceAttr>())
         addDeferredDeclToEmit(GD);
       if (!Global->hasAttr<CUDADeviceAttr>() &&
           !Global->hasAttr<CUDAGlobalAttr>() &&
@@ -3564,12 +3565,14 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         // In SYCL, every (CUDA) __device__ function needs to have a __host__
         // counterpart that will be emitted in case of it is not already
         // present.
-        if (LangOpts.SYCLIsHost && (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>()))
+        if (LangOpts.SYCLIsHost &&
+            (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>()))
           addDeferredDeclToEmit(GD);
         return;
       }
       // Do not emit __host__ function in SYCL device compilation.
-      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>())
+      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
+          Global->hasAttr<CUDAHostAttr>())
         return;
 
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
@@ -3682,7 +3685,6 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     // DeferredDeclsToEmit.
     DeferredDecls[MangledName] = GD;
   }
-
 }
 
 // Check if T is a class type with a destructor that's not dllimport.
