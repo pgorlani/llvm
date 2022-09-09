@@ -3568,7 +3568,20 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         if (LangOpts.SYCLIsHost &&
             (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>()))
           addDeferredDeclToEmit(GD);
-        return;
+
+
+        if (LangOpts.SYCLIsDevice){
+
+          if (const auto *FD = dyn_cast<FunctionDecl>(Global))
+            if (!FD->doesThisDeclarationHaveABody())
+              if (!FD->doesDeclarationForceExternallyVisibleDefinition())
+                return;
+
+          StringRef MangledName_ = getMangledName(GD);
+          DeferredDecls[MangledName_] = GD;
+          std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
+        }
+       return;
       }
       // Do not emit __host__ function in SYCL device compilation.
       if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
