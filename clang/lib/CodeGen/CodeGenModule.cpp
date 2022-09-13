@@ -3564,7 +3564,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       // their device-side incarnations.
 
       // So device-only functions are the only things we skip, except for SYCL.
-      if (isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
+      if (!LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
           Global->hasAttr<CUDADeviceAttr>()) {
         // In SYCL, every (CUDA) __device__ function needs to have a __host__
         // counterpart that will be emitted in case of it is not already
@@ -3574,29 +3574,30 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
           std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
           addDeferredDeclToEmit(GD); 
         }
-
-        if (LangOpts.SYCLIsDevice){
-
-          if (const auto *FD = dyn_cast<FunctionDecl>(Global))
-            if (!FD->doesThisDeclarationHaveABody())
-              if (!FD->doesDeclarationForceExternallyVisibleDefinition())
-                return;
-
-          StringRef MangledName_ = getMangledName(GD);
-          DeferredDecls[MangledName_] = GD;
-          if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
-        }
-       return;
+        return;
       }
 
+      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && Global->hasAttr<CUDADeviceAttr>()){
+
+        if (const auto *FD = dyn_cast<FunctionDecl>(Global))
+          if (!FD->doesThisDeclarationHaveABody())
+            if (!FD->doesDeclarationForceExternallyVisibleDefinition())
+              return;
+
+        StringRef MangledName_ = getMangledName(GD);
+        DeferredDecls[MangledName_] = GD;
+        if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<" "<<Global->hasAttr<CUDAHostAttr>()<<std::endl;
+
+        return;
+      }
+/* 
       // Do not emit __host__ function in SYCL device compilation.
-      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
-          Global->hasAttr<CUDAHostAttr>()){
-          StringRef MangledName_ = getMangledName(GD);
-          if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<""<<Global->hasAttr<CUDADeviceAttr>()<<std::endl;
+      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>()){
+        StringRef MangledName_ = getMangledName(GD);
+        if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<""<<Global->hasAttr<CUDADeviceAttr>()<<std::endl;
          return;
       }
-
+*/
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
              "Expected Variable or Function");
     }
