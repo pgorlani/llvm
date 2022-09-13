@@ -1,3 +1,4 @@
+#include<iostream>
 //===--- CodeGenModule.cpp - Emit LLVM Code from ASTs for a Module --------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -3511,6 +3512,8 @@ ConstantAddress CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
 
 void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   const auto *Global = cast<ValueDecl>(GD.getDecl());
+  StringRef MangledName_ = getMangledName(GD);
+  if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
 
   // Weak references don't produce any output by themselves.
   if (Global->hasAttr<WeakRefAttr>())
@@ -3539,6 +3542,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   if (Global->hasAttr<CPUDispatchAttr>())
     return emitCPUDispatchDefinition(GD);
 
+
   // If this is CUDA, be selective about which declarations we emit.
   if (LangOpts.CUDA) {
     if (LangOpts.CUDAIsDevice) {
@@ -3565,10 +3569,11 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         // In SYCL, every (CUDA) __device__ function needs to have a __host__
         // counterpart that will be emitted in case of it is not already
         // present.
-        if (LangOpts.SYCLIsHost &&
-            (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>()))
-          addDeferredDeclToEmit(GD);
-
+        if (LangOpts.SYCLIsHost && 
+            (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>())){
+          std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
+          addDeferredDeclToEmit(GD); 
+        }
 
         if (LangOpts.SYCLIsDevice){
 
@@ -3579,14 +3584,18 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 
           StringRef MangledName_ = getMangledName(GD);
           DeferredDecls[MangledName_] = GD;
-          std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
+          if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
         }
        return;
       }
+
       // Do not emit __host__ function in SYCL device compilation.
       if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
-          Global->hasAttr<CUDAHostAttr>())
-        return;
+          Global->hasAttr<CUDAHostAttr>()){
+          StringRef MangledName_ = getMangledName(GD);
+          if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<""<<Global->hasAttr<CUDADeviceAttr>()<<std::endl;
+         return;
+      }
 
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
              "Expected Variable or Function");
@@ -3686,7 +3695,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   StringRef MangledName = getMangledName(GD);
   if (GetGlobalValue(MangledName) != nullptr) {
     // The value has already been used and should therefore be emitted.
-    addDeferredDeclToEmit(GD);
+    addDeferredDeclToEmit(GD); //<-- __device__ templates ends here
+    if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
   } else if (MustBeEmitted(Global)) {
     // The value must be emitted, but cannot be emitted eagerly.
     assert(!MayBeEmittedEagerly(Global));
@@ -3697,6 +3707,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     // first use of the mangled name will cause it to move into
     // DeferredDeclsToEmit.
     DeferredDecls[MangledName] = GD;
+    if(MangledName.str().find("my_device_function_3") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName.str()<<std::endl;
   }
 }
 
