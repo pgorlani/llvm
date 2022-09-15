@@ -215,6 +215,11 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   if (CallerTarget == CFT_InvalidTarget || CalleeTarget == CFT_InvalidTarget)
     return CFP_Never;
 
+  // In case SYCL device compilation prefer __device__
+  if (!getLangOpts().CUDAIsDevice && getLangOpts().SYCLIsDevice)
+    if ((CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device))
+      return CFP_Native;
+
   // (a) Can't call global from some contexts until we support CUDA's
   // dynamic parallelism.
   if (CalleeTarget == CFT_Global &&
