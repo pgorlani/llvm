@@ -3571,7 +3571,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         // present. 
 
         // This works for template. But not for inline
-        if (LangOpts.SYCLIsHost && 
+        if (LangOpts.SYCLIsHost && // do not check MustBeEmitted allows using the inline one but it creates problem in the CUDA kernel execution 
             (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>())){
           std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
 
