@@ -2899,6 +2899,8 @@ void CodeGenModule::EmitDeferred() {
   CurDeclsToEmit.swap(DeferredDeclsToEmit);
 
   for (GlobalDecl &D : CurDeclsToEmit) {
+/*
+    // This do not allow to inline __host__ function to be emitted in sycl-cuda-host compilation.
     // Emit a dummy __host__ function if a legit one is not already present in
     // case of SYCL compilation of CUDA sources.
     if (LangOpts.CUDA && !LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost) {
@@ -2908,7 +2910,7 @@ void CodeGenModule::EmitDeferred() {
            OtherD.getCanonicalDecl().getDecl())) {
         continue;
       }
-    }
+    }*/
     const ValueDecl *VD = cast<ValueDecl>(D.getDecl());
     // If emitting for SYCL device, emit the deferred alias
     // as well as what it aliases.
@@ -3579,7 +3581,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
           return;
         }
 
-        if(MangledName_.str().find("my_device_function") != std::string::npos)std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
+        if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
         return;
       }
 
