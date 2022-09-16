@@ -1,3 +1,4 @@
+#include<iostream>
 //===--- CodeGenFunction.cpp - Emit LLVM Code from ASTs for a Function ----===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -1652,6 +1653,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   if (getLangOpts().CUDA && !getLangOpts().CUDAIsDevice &&
       getLangOpts().SYCLIsHost && !FD->hasAttr<CUDAHostAttr>() &&
       FD->hasAttr<CUDADeviceAttr>()) {
+std::cerr<<__FILE__<<__LINE__<<std::endl;
     Fn->setLinkage(llvm::Function::WeakODRLinkage);
     if (FD->getReturnType()->isVoidType())
       Builder.CreateRetVoid();

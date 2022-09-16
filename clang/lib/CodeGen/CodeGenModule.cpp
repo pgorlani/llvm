@@ -3568,17 +3568,25 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
           Global->hasAttr<CUDADeviceAttr>()) {
         // In SYCL, every (CUDA) __device__ function needs to have a __host__
         // counterpart that will be emitted in case of it is not already
-        // present.
+        // present. 
+
+        // This works for template. But not for inline
         if (LangOpts.SYCLIsHost && 
             (MustBeEmitted(Global) || Global->hasAttr<SYCLDeviceAttr>())){
           std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
+
           addDeferredDeclToEmit(GD); 
+          return;
         }
+
+        if(MangledName_.str().find("my_device_function") != std::string::npos)std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<std::endl;
         return;
       }
 
+      // Eventually emit __device__ functions in SYCL device compilation
       if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && Global->hasAttr<CUDADeviceAttr>()){
 
+        // check if this is necessary
         if (const auto *FD = dyn_cast<FunctionDecl>(Global))
           if (!FD->doesThisDeclarationHaveABody())
             if (!FD->doesDeclarationForceExternallyVisibleDefinition())
@@ -3590,14 +3598,11 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 
         return;
       }
-/* 
-      // Do not emit __host__ function in SYCL device compilation.
-      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>()){
-        StringRef MangledName_ = getMangledName(GD);
-        if(MangledName_.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName_.str()<<""<<Global->hasAttr<CUDADeviceAttr>()<<std::endl;
+ 
+      // Do not emit __host__ functions in SYCL device compilation.
+      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>())
          return;
-      }
-*/
+
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
              "Expected Variable or Function");
     }
@@ -3708,7 +3713,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     // first use of the mangled name will cause it to move into
     // DeferredDeclsToEmit.
     DeferredDecls[MangledName] = GD;
-    if(MangledName.str().find("my_device_function_3") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName.str()<<std::endl;
+    if(MangledName.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName.str()<<std::endl;
   }
 }
 

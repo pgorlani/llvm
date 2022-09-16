@@ -198,9 +198,9 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | h  | g  | N   | N   | (c) |
 // | h  | h  | N   | N   | (c) |
 // | h  | hd | HD  | HD  | (b) |
-// | hd | d  | WS  | SS  | (d) |
-// | hd | g  | SS  | --  |(d/a)|
-// | hd | h  | SS  | WS  | (d) |
+// | hd | d  | WS (Native SYCL)  | SS  | (d) |<
+// | hd | g  | SS  | --  |(d/a)|<
+// | hd | h  | SS  | WS  | (d) |<
 // | hd | hd | HD  | HD  | (b) |
 
 Sema::CUDAFunctionPreference
