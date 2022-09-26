@@ -4423,10 +4423,12 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     // deferred decl with this name, remember that we need to emit it at the end
     // of the file.
     auto DDI = DeferredDecls.find(MangledName);
-    if (DDI != DeferredDecls.end()) {
+    if (DDI != DeferredDecls.end() && ( (getLangOpts().SYCLIsHost && getLangOpts().CUDA && !getLangOpts().CUDAIsDevice) ? (DDI->second).getDecl()->hasAttr<CUDAHostAttr>() == D->hasAttr<CUDAHostAttr>() : true )) {
       // Move the potentially referenced deferred decl to the
       // DeferredDeclsToEmit list, and remove it from DeferredDecls (since we
       // don't need it anymore).
+      if(MangledName.str().find("cudaMalloc") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName.str()<<" H:"<<(DDI->second).getDecl()->hasAttr<CUDAHostAttr>()<<" D:"<<(DDI->second).getDecl()->hasAttr<CUDADeviceAttr>()<<"D -- H:"<<D->hasAttr<CUDAHostAttr>()<<std::endl;
+      if(MangledName.str().find("my_device_function") != std::string::npos) std::cerr<<__FILE__<<" "<<__LINE__<<MangledName.str()<<" H:"<<(DDI->second).getDecl()->hasAttr<CUDAHostAttr>()<<" D:"<<(DDI->second).getDecl()->hasAttr<CUDADeviceAttr>()<<"D -- H:"<<D->hasAttr<CUDAHostAttr>()<<std::endl;
       addDeferredDeclToEmit(DDI->second);
       EmittedDeferredDecls[DDI->first] = DDI->second;
       DeferredDecls.erase(DDI);
