@@ -11539,8 +11539,7 @@ static GVALinkage basicGVALinkageForFunction(const ASTContext &Context,
     return GVA_AvailableExternally;
 
   case TSK_ImplicitInstantiation:
-    // this work, but probably it is not so nice
-    External = /*(Context.getLangOpts().CUDA && !Context.getLangOpts().CUDAIsDevice && Context.getLangOpts().SYCLIsHost)? GVA_StrongODR :*/ GVA_DiscardableODR;
+    External = GVA_DiscardableODR;
     break;
   }
 
@@ -11599,15 +11598,6 @@ static GVALinkage adjustGVALinkageForAttributes(const ASTContext &Context,
              D->hasAttr<OpenCLKernelAttr>()) {
     if (L == GVA_DiscardableODR)
       return GVA_StrongODR;
-  } else if (Context.getLangOpts().CUDA && !Context.getLangOpts().CUDAIsDevice && Context.getLangOpts().SYCLIsHost) {
-    // emitting the __host__ dummy function in case of .cu SYCL compilation
-    // unfortunately this grasp more __device__ function than needed producing an error.
-    if (!D->hasAttr<CUDAHostAttr>() && D->hasAttr<CUDADeviceAttr>() && (L == GVA_DiscardableODR)){
-      if (const auto *FD = dyn_cast<FunctionDecl>(D))
-        if (FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-          return GVA_StrongODR;
- 
-    }
   }
     return L;
 }
