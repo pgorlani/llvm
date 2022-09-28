@@ -3593,7 +3593,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         if (LangOpts.CUDA)
           if (!LangOpts.CUDAIsDevice)
             if (!LangOpts.SYCLIsDevice && !Global->hasAttr<CUDAHostAttr>()&& !Global->hasAttr<CUDADeviceAttr>()) {
-              StringRef MangledName_ = getMangledName(GD); // << ---- this makes it works | it makes no sense !
+ //             StringRef MangledName_ = getMangledName(GD); // << ---- this makes it works | it makes no sense !
+//              std::cerr<<MangledName_.str()<<std::endl;
             }
               return;
        }
@@ -4413,7 +4414,11 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     // deferred decl with this name, remember that we need to emit it at the end
     // of the file.
     auto DDI = DeferredDecls.find(MangledName);
-    if (DDI != DeferredDecls.end() && ( (getLangOpts().SYCLIsHost && getLangOpts().CUDA && !getLangOpts().CUDAIsDevice) ? (DDI->second).getDecl()->hasAttr<CUDAHostAttr>() == D->hasAttr<CUDAHostAttr>() : true )) {
+    if (DDI != DeferredDecls.end() &&
+       ((getLangOpts().SYCLIsHost && getLangOpts().CUDA && !getLangOpts().CUDAIsDevice) ?
+         (DDI->second).getDecl()->hasAttr<CUDAHostAttr>() == D->hasAttr<CUDAHostAttr>() 
+          &&  (DDI->second).getDecl()->hasAttr<CUDADeviceAttr>() == D->hasAttr<CUDADeviceAttr>()
+       : true )) {
       // Move the potentially referenced deferred decl to the
       // DeferredDeclsToEmit list, and remove it from DeferredDecls (since we
       // don't need it anymore).
