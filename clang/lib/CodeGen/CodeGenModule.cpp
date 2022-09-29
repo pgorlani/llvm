@@ -3646,10 +3646,11 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // function. If the global must always be emitted, do it eagerly if possible
   // to benefit from cache locality.
   if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
-    // Avoid emitting same __host__ __device__ function in SYCL compilation of CUDA sources.
-    if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice
-        isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
-        Global->hasAttr<CUDADeviceAttr>()) {
+    // Avoid emitting same __host__ __device__ function in SYCL compilation of
+    // CUDA sources.
+    if (LangOpts.SYCLIsHost && LangOpts.CUDA &&
+        !LangOpts.CUDAIsDevice && isa<FunctionDecl>(Global) &&
+        !Global->hasAttr<CUDAHostAttr>() && Global->hasAttr<CUDADeviceAttr>()) {
       addDeferredDeclToEmit(GD);
       return;
     }
@@ -3677,8 +3678,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     EmittedDeferredDecls[MangledName] = GD;
   } else {
 
-   // In SYCL compilation of CUDA sources
-   if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice){
+    // In SYCL compilation of CUDA sources
+    if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice) {
       if (Global->hasAttr<CUDAHostAttr>()) {
         // remove already present __device__ function.
         auto DDI = DeferredDecls.find(MangledName);
@@ -3692,7 +3693,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
           return;
         }
       }
-   }
+    }
 
     // Otherwise, remember that we saw a deferred decl with this name.  The
     // first use of the mangled name will cause it to move into
@@ -4404,7 +4405,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     // This is the first use or definition of a mangled name.  If there is a
     // deferred decl with this name, remember that we need to emit it at the end
     // of the file.
-    // In SYCL compilation of CUDA sources, avoid the emission if the __device__/__host__ attributes do not match. 
+    // In SYCL compilation of CUDA sources, avoid the emission if the
+    // __device__/__host__ attributes do not match.
     auto DDI = DeferredDecls.find(MangledName);
     if (DDI != DeferredDecls.end() &&
         ((getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
