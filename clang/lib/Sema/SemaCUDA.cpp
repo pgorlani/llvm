@@ -198,9 +198,9 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | h  | g  | N   | N   | (c) |
 // | h  | h  | N   | N   | (c) |
 // | h  | hd | HD  | HD  | (b) |
-// | hd | d  | WS (Native SYCL)  | SS  | (d) |<
-// | hd | g  | SS  | --  |(d/a)|<
-// | hd | h  | SS  | WS  | (d) |<
+// | hd | d  | WS  | SS  | (d) |
+// | hd | g  | SS  | --  |(d/a)|
+// | hd | h  | SS  | WS  | (d) |
 // | hd | hd | HD  | HD  | (b) |
 
 Sema::CUDAFunctionPreference
@@ -210,15 +210,16 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller);
   CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
 
+  // Prefer __device__ function in SYCL-device compilation of CUDA sources.
+  if (getLangOpts().SYCLIsDevice && getLangOpts().CUDA &&
+      !getLangOpts().CUDAIsDevice)
+    if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
+      return CFP_Native;
+
   // If one of the targets is invalid, the check always fails, no matter what
   // the other target is.
   if (CallerTarget == CFT_InvalidTarget || CalleeTarget == CFT_InvalidTarget)
     return CFP_Never;
-
-  // In case SYCL device compilation prefer __device__
-  if (!getLangOpts().CUDAIsDevice && getLangOpts().SYCLIsDevice)
-    if ((CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device))
-      return CFP_Native;
 
   // (a) Can't call global from some contexts until we support CUDA's
   // dynamic parallelism.
