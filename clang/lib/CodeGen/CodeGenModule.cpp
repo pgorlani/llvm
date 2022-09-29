@@ -3648,9 +3648,9 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
     // Avoid emitting same __host__ __device__ function in SYCL compilation of
     // CUDA sources.
-    if (LangOpts.SYCLIsHost && LangOpts.CUDA &&
-        !LangOpts.CUDAIsDevice && isa<FunctionDecl>(Global) &&
-        !Global->hasAttr<CUDAHostAttr>() && Global->hasAttr<CUDADeviceAttr>()) {
+    if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
+        isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
+        Global->hasAttr<CUDADeviceAttr>()) {
       addDeferredDeclToEmit(GD);
       return;
     }
