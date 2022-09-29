@@ -5097,13 +5097,11 @@ class OffloadingActionBuilder final {
         // Append all device actions followed by the proper offload action.
         for (auto TargetActionInfo :
              llvm::zip(SYCLDeviceActions, SYCLTargetInfoList)) {
-
           Action *A = std::get<0>(TargetActionInfo);
           DeviceTargetInfo &TargetInfo = std::get<1>(TargetActionInfo);
 
           OffloadAction::DeviceDependences Dep;
           Dep.add(*A, *TargetInfo.TC, TargetInfo.BoundArch, Action::OFK_SYCL);
-
           if (ExternalCudaAction) {
             assert(
                 SYCLTargetInfoList.size() == 1 &&
@@ -6629,7 +6627,6 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
     }
     for (auto &I : Inputs) {
       std::string SrcFileName(I.second->getAsString(Args));
-
       if ((I.first == types::TY_PP_C || I.first == types::TY_PP_CXX ||
            types::isSrcFile(I.first))) {
         // Unique ID is generated for source files and preprocessed files.
