@@ -2903,8 +2903,9 @@ void CodeGenModule::EmitDeferred() {
     if (LangOpts.CUDA && !LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost) {
       GlobalDecl OtherD;
       if (lookupRepresentativeDecl(getMangledName(D), OtherD) &&
-          (D.getCanonicalDecl().getDecl() != OtherD.getCanonicalDecl().getDecl()) &&
-           D.getCanonicalDecl().getDecl()->hasAttr<CUDADeviceAttr>()) {
+          (D.getCanonicalDecl().getDecl() !=
+           OtherD.getCanonicalDecl().getDecl()) &&
+          D.getCanonicalDecl().getDecl()->hasAttr<CUDADeviceAttr>()) {
         continue;
       }
     }
@@ -3554,18 +3555,17 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       // device-side variables because the CUDA runtime needs their
       // size and host-side address in order to provide access to
       // their device-side incarnations.
-      if (!LangOpts.isSYCL() && isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
-          Global->hasAttr<CUDADeviceAttr>())
-          return;
-
+      if (!LangOpts.isSYCL() && isa<FunctionDecl>(Global) &&
+          !Global->hasAttr<CUDAHostAttr>() && Global->hasAttr<CUDADeviceAttr>())
+        return;
 
       // Do not emit __host__ functions in SYCL device compilation.
-      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>() &&
-          !Global->hasAttr<CUDADeviceAttr>())
+      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
+          Global->hasAttr<CUDAHostAttr>() && !Global->hasAttr<CUDADeviceAttr>())
         return;
- 
+
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
-            "Expected Variable or Function");
+             "Expected Variable or Function");
     }
   }
 
@@ -3584,21 +3584,13 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     }
   }
 
-
   // Ignore declarations, they will be emitted on their first use.
   if (const auto *FD = dyn_cast<FunctionDecl>(Global)) {
     // Forward declarations are emitted lazily on first use.
 
     if (!FD->doesThisDeclarationHaveABody()) {
-      if (!FD->doesDeclarationForceExternallyVisibleDefinition()){
-        if (LangOpts.CUDA)
-          if (!LangOpts.CUDAIsDevice)
-            if (!LangOpts.SYCLIsDevice && !Global->hasAttr<CUDAHostAttr>()&& !Global->hasAttr<CUDADeviceAttr>()) {
- //             StringRef MangledName_ = getMangledName(GD); // << ---- this makes it works | it makes no sense !
-//              std::cerr<<MangledName_.str()<<std::endl;
-            }
-              return;
-       }
+      if (!FD->doesDeclarationForceExternallyVisibleDefinition())
+        return;
 
       StringRef MangledName = getMangledName(GD);
 
@@ -3644,7 +3636,6 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     }
   }
 
-
   // clang::ParseAST ensures that we emit the SYCL devices at the end, so
   // anything that is a device (or indirectly called) will be handled later.
   if (LangOpts.SYCLIsDevice && MustBeEmitted(Global)) {
@@ -3657,12 +3648,13 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // to benefit from cache locality.
   if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
     // avoid emitting same __host__ __device__ function
-    if (!LangOpts.SYCLIsDevice  && LangOpts.SYCLIsHost && isa<FunctionDecl>(Global)
-    && !Global->hasAttr<CUDAHostAttr>() && Global->hasAttr<CUDADeviceAttr>() ){
-      addDeferredDeclToEmit(GD); 
+    if (!LangOpts.SYCLIsDevice && LangOpts.SYCLIsHost &&
+        isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
+        Global->hasAttr<CUDADeviceAttr>()) {
+      addDeferredDeclToEmit(GD);
       return;
     }
-     // Emit the definition if it can't be deferred.
+    // Emit the definition if it can't be deferred.
     EmitGlobalDefinition(GD);
     return;
   }
@@ -3689,25 +3681,25 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     // first use of the mangled name will cause it to move into
     // DeferredDeclsToEmit.
 
-    if(!LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost && LangOpts.CUDA)
-    if(Global->hasAttr<CUDAHostAttr>()){
-      // remove in the case it finds a __device__ one.
-      auto DDI = DeferredDecls.find(MangledName);
-      if (DDI != DeferredDecls.end()) {
-        DeferredDecls.erase(DDI);
+    if (!LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost && LangOpts.CUDA)
+      if (Global->hasAttr<CUDAHostAttr>()) {
+        // remove in the case it finds a __device__ one.
+        auto DDI = DeferredDecls.find(MangledName);
+        if (DDI != DeferredDecls.end()) {
+          DeferredDecls.erase(DDI);
+        }
       }
-    }
- 
-    if(!LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost && LangOpts.CUDA)
-    if(Global->hasAttr<CUDADeviceAttr>()){
-      // do not insert a __device__ one if __host__ is present.
-      auto DDI = DeferredDecls.find(MangledName);
-      if (DDI != DeferredDecls.end()) {
-        return;
-      }
-    }
 
-   DeferredDecls[MangledName] = GD;
+    if (!LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost && LangOpts.CUDA)
+      if (Global->hasAttr<CUDADeviceAttr>()) {
+        // do not insert a __device__ one if __host__ is present.
+        auto DDI = DeferredDecls.find(MangledName);
+        if (DDI != DeferredDecls.end()) {
+          return;
+        }
+      }
+
+    DeferredDecls[MangledName] = GD;
   }
 }
 
@@ -4416,10 +4408,13 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     // of the file.
     auto DDI = DeferredDecls.find(MangledName);
     if (DDI != DeferredDecls.end() &&
-       ((getLangOpts().SYCLIsHost && getLangOpts().CUDA && !getLangOpts().CUDAIsDevice) ?
-         (DDI->second).getDecl()->hasAttr<CUDAHostAttr>() == D->hasAttr<CUDAHostAttr>() 
-          &&  (DDI->second).getDecl()->hasAttr<CUDADeviceAttr>() == D->hasAttr<CUDADeviceAttr>()
-       : true )) {
+        ((getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
+          !getLangOpts().CUDAIsDevice)
+             ? (DDI->second).getDecl()->hasAttr<CUDAHostAttr>() ==
+                       D->hasAttr<CUDAHostAttr>() &&
+                   (DDI->second).getDecl()->hasAttr<CUDADeviceAttr>() ==
+                       D->hasAttr<CUDADeviceAttr>()
+             : true)) {
       // Move the potentially referenced deferred decl to the
       // DeferredDeclsToEmit list, and remove it from DeferredDecls (since we
       // don't need it anymore).

@@ -1659,11 +1659,9 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
       Builder.CreateRet(llvm::UndefValue::get(Fn->getReturnType()));
     return;
   }
-
+  // Set weak ODR linkage for possibly duplicated __device__ functions.
   if (getLangOpts().CUDA && !getLangOpts().CUDAIsDevice &&
-      getLangOpts().SYCLIsDevice && FD->hasAttr<CUDADeviceAttr>())
-  {
-    // set weak odr linkage for possibly duplicated __device__ functions.
+      getLangOpts().SYCLIsDevice && FD->hasAttr<CUDADeviceAttr>()) {
     Fn->setLinkage(llvm::Function::WeakODRLinkage);
   }
 
