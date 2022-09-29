@@ -3559,7 +3559,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
           !Global->hasAttr<CUDAHostAttr>() && Global->hasAttr<CUDADeviceAttr>())
         return;
 
-      // Do not emit __host__ functions in SYCL device compilation.
+      // Do not emit __host__ only functions in SYCL device compilation.
       if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
           Global->hasAttr<CUDAHostAttr>() && !Global->hasAttr<CUDADeviceAttr>())
         return;
@@ -3587,7 +3587,6 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // Ignore declarations, they will be emitted on their first use.
   if (const auto *FD = dyn_cast<FunctionDecl>(Global)) {
     // Forward declarations are emitted lazily on first use.
-
     if (!FD->doesThisDeclarationHaveABody()) {
       if (!FD->doesDeclarationForceExternallyVisibleDefinition())
         return;
@@ -3647,8 +3646,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // function. If the global must always be emitted, do it eagerly if possible
   // to benefit from cache locality.
   if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
-    // avoid emitting same __host__ __device__ function
-    if (!LangOpts.SYCLIsDevice && LangOpts.SYCLIsHost &&
+    // Avoid emitting same __host__ __device__ function in SYCL compilation of CUDA sources.
+    if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice
         isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
         Global->hasAttr<CUDADeviceAttr>()) {
       addDeferredDeclToEmit(GD);
@@ -3670,35 +3669,34 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   StringRef MangledName = getMangledName(GD);
   if (GetGlobalValue(MangledName) != nullptr) {
     // The value has already been used and should therefore be emitted.
-    addDeferredDeclToEmit(GD); //<-- __device__ templates ends here
+    addDeferredDeclToEmit(GD);
   } else if (MustBeEmitted(Global)) {
     // The value must be emitted, but cannot be emitted eagerly.
     assert(!MayBeEmittedEagerly(Global));
     addDeferredDeclToEmit(GD);
     EmittedDeferredDecls[MangledName] = GD;
   } else {
-    // Otherwise, remember that we saw a deferred decl with this name.  The
-    // first use of the mangled name will cause it to move into
-    // DeferredDeclsToEmit.
 
-    if (!LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost && LangOpts.CUDA)
+   // In SYCL compilation of CUDA sources
+   if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice){
       if (Global->hasAttr<CUDAHostAttr>()) {
-        // remove in the case it finds a __device__ one.
+        // remove already present __device__ function.
         auto DDI = DeferredDecls.find(MangledName);
         if (DDI != DeferredDecls.end()) {
           DeferredDecls.erase(DDI);
         }
-      }
-
-    if (!LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost && LangOpts.CUDA)
-      if (Global->hasAttr<CUDADeviceAttr>()) {
-        // do not insert a __device__ one if __host__ is present.
+      } else if (Global->hasAttr<CUDADeviceAttr>()) {
+        // do not insert a __device__ function if a __host__ one is present.
         auto DDI = DeferredDecls.find(MangledName);
         if (DDI != DeferredDecls.end()) {
           return;
         }
       }
+   }
 
+    // Otherwise, remember that we saw a deferred decl with this name.  The
+    // first use of the mangled name will cause it to move into
+    // DeferredDeclsToEmit.
     DeferredDecls[MangledName] = GD;
   }
 }
@@ -4406,6 +4404,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     // This is the first use or definition of a mangled name.  If there is a
     // deferred decl with this name, remember that we need to emit it at the end
     // of the file.
+    // In SYCL compilation of CUDA sources, avoid the emission if the __device__/__host__ attributes do not match. 
     auto DDI = DeferredDecls.find(MangledName);
     if (DDI != DeferredDecls.end() &&
         ((getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
