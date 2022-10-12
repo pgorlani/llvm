@@ -1370,9 +1370,10 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
 
   if (JA.isOffloading(Action::OFK_SYCL)) {
     toolchains::SYCLToolChain::AddSYCLIncludeArgs(D, Args, CmdArgs);
-    if (Inputs[0].getType() == types::TY_CUDA)
+    if (Inputs[0].getType() == types::TY_CUDA){
       // Include __clang_cuda_runtime_wrapper.h in .cu SYCL compilation.
       getToolChain().AddCudaIncludeArgs(Args, CmdArgs);
+    }
   }
 
   // If we are offloading to a target via OpenMP we need to include the
