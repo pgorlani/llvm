@@ -18145,8 +18145,7 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func,
        Func->getMemberSpecializationInfo()))
     checkSpecializationReachability(Loc, Func);
 
-  // error: reference to __device__ function in __host__ __device__ function
-  if (getLangOpts().CUDA && !getLangOpts().isSYCL())
+  if (getLangOpts().CUDA)
     CheckCUDACall(Loc, Func);
   if (getLangOpts().SYCLIsDevice)
     checkSYCLDeviceFunction(Loc, Func);

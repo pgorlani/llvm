@@ -210,11 +210,21 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller);
   CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
 
-  // Prefer __device__ function in SYCL-device compilation of CUDA sources.
   if (getLangOpts().SYCLIsDevice && getLangOpts().CUDA &&
-      !getLangOpts().CUDAIsDevice)
+      !getLangOpts().CUDAIsDevice){
+    // Prefer __device__ function in SYCL-device compilation of CUDA sources.
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
+
+    if (CallerTarget == CFT_Device && CalleeTarget == CFT_Host)
+      return CFP_HostDevice;
+   }
+
+  if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
+      !getLangOpts().CUDAIsDevice){
+    if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
+      return CFP_HostDevice;
+  }
 
   // If one of the targets is invalid, the check always fails, no matter what
   // the other target is.
