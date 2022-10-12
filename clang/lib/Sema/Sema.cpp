@@ -1791,7 +1791,7 @@ public:
     // Finalize analysis of SYCL-specific constructs.
     // error: SYCL kernel cannot call an undefined function without
     // SYCL_EXTERNAL attribute
-    if (Caller && S.LangOpts.SYCLIsDevice && !S.LangOpts.CUDA)
+    if (Caller && S.LangOpts.SYCLIsDevice)
       S.finalizeSYCLDelayedAnalysis(Caller, FD, Loc, RootReason);
     if (Caller)
       S.DeviceKnownEmittedFns[FD] = {Caller, Loc};
