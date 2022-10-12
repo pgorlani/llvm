@@ -3564,7 +3564,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
           Global->hasAttr<CUDAHostAttr>() && !Global->hasAttr<CUDADeviceAttr>())
         return;
-
+      }
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
              "Expected Variable or Function");
     }
