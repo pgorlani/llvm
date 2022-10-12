@@ -215,9 +215,6 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
     // Prefer __device__ function in SYCL-device compilation of CUDA sources.
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
-
-    if (CallerTarget == CFT_Device && CalleeTarget == CFT_Host)
-      return CFP_HostDevice;
    }
 
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
