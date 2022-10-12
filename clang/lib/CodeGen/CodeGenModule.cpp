@@ -3556,8 +3556,9 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       // size and host-side address in order to provide access to
       // their device-side incarnations.
       if (!LangOpts.isSYCL() && isa<FunctionDecl>(Global) &&
-          !Global->hasAttr<CUDAHostAttr>() && Global->hasAttr<CUDADeviceAttr>())
+          !Global->hasAttr<CUDAHostAttr>() && Global->hasAttr<CUDADeviceAttr>()) {
         return;
+      }
 
       // Do not emit __host__ only functions in SYCL device compilation.
       if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
