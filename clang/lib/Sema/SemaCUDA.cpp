@@ -222,7 +222,7 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | h  | h  |    N     |    N     | (b) |
 // | h  | hd |    HD    |    HD    | (d) |
 // | hd | d  |    N(x)  |    HD(y) | ( ) | < diff from above
-// | hd | g  |    --    |    SS    |(d/a)|
+// | hd | g  |   --(z)  |    SS    |(d/a)|
 // | hd | h  |    WS*   |    WS    | (d) | * but the __host__ function is not emitted so there is a PTX error < diff from above
 // | hd | hd |    HD    |    HD    | (b) |
 
@@ -239,6 +239,10 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
     // (x) Prefer __device__ function in SYCL-device compilation of CUDA sources.
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
+    // (z) 
+    if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Global)
+      return CFP_Never;
+ 
    }
 
   // Sh - SYCL is host
