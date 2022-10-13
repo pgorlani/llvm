@@ -349,10 +349,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, ArrayRef<SourceLocation> Locs,
         DeduceReturnType(FD, Loc))
       return true;
 
-    //  error: reference to __device__ function in __host__ __device__ function
-    //  (lambda)
-    if (getLangOpts().CUDA && !getLangOpts().isSYCL() &&
-        !CheckCUDACall(Loc, FD))
+    if (getLangOpts().CUDA && !CheckCUDACall(Loc, FD))
       return true;
 
     if (getLangOpts().SYCLIsDevice && !checkSYCLDeviceFunction(Loc, FD))
