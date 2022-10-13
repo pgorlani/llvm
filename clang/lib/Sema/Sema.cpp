@@ -1789,8 +1789,6 @@ public:
         (ShouldEmitRootNode || InOMPDeviceContext))
       S.finalizeOpenMPDelayedAnalysis(Caller, FD, Loc);
     // Finalize analysis of SYCL-specific constructs.
-    // error: SYCL kernel cannot call an undefined function without
-    // SYCL_EXTERNAL attribute
     if (Caller && S.LangOpts.SYCLIsDevice)
       S.finalizeSYCLDelayedAnalysis(Caller, FD, Loc, RootReason);
     if (Caller)
