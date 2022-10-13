@@ -217,13 +217,13 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | g  | g  |    --    |    --    | (a) |
 // | g  | h  |    --    |    --    | (e) |
 // | g  | hd |    HD    |    HD    | (c) |
-// | h  | d  |    N     |    --    | ( ) |
+// | h  | d  |    --    |    --    | (e) |
 // | h  | g  |    N     |    N     | (c) |
 // | h  | h  |    N     |    N     | (b) |
 // | h  | hd |    HD    |    HD    | (d) |
-// | hd | d  |    SS    |    SS    | ( ) |
-// | hd | g  |    --    |    --    | ( ) |
-// | hd | h  |    WS    |    WS    | ( ) |
+// | hd | d  |    N(x)  |    HD(y) | ( ) | < diff from above
+// | hd | g  |    --    |    SS    |(d/a)|
+// | hd | h  |    WS*   |    WS    | (d) | * but the __host__ function is not emitted so there is a PTX error < diff from above
 // | hd | hd |    HD    |    HD    | (b) |
 
 Sema::CUDAFunctionPreference
@@ -233,18 +233,21 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller);
   CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
 
+  // Sd - SYCL is device
   if (getLangOpts().SYCLIsDevice && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
-    // Prefer __device__ function in SYCL-device compilation of CUDA sources.
+    // (x) Prefer __device__ function in SYCL-device compilation of CUDA sources.
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
-  }
+   }
 
+  // Sh - SYCL is host
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
+    // (y)
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_HostDevice;
-  }
+   }
 
   // If one of the targets is invalid, the check always fails, no matter what
   // the other target is.
