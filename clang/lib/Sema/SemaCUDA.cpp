@@ -202,6 +202,29 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | hd | g  | SS  | --  |(d/a)|
 // | hd | h  | SS  | WS  | (d) |
 // | hd | hd | HD  | HD  | (b) |
+//
+// In combined SYCL - CUDA mode
+// Sh - SYCL is host
+// Sd - SYCL is device
+//
+// | F  | T  | Ph - Sd  | Pd - Sh  |  H  |
+// |----+----+----------+----------+-----+
+// | d  | d  |    N     |    N     | (c) |
+// | d  | g  |    --    |    --    | (a) |
+// | d  | h  |    --    |    --    | (e) |
+// | d  | hd |    HD    |    HD    | (b) |
+// | g  | d  |    N     |    N     | (c) |
+// | g  | g  |    --    |    --    | (a) |
+// | g  | h  |    --    |    --    | (e) |
+// | g  | hd |    HD    |    HD    | (c) |
+// | h  | d  |    N     |    --    | ( ) |
+// | h  | g  |    N     |    N     | (c) |
+// | h  | h  |    N     |    N     | (b) |
+// | h  | hd |    HD    |    HD    | (d) |
+// | hd | d  |    SS    |    SS    | ( ) |
+// | hd | g  |    --    |    --    | ( ) |
+// | hd | h  |    WS    |    WS    | ( ) |
+// | hd | hd |    HD    |    HD    | (b) |
 
 Sema::CUDAFunctionPreference
 Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
