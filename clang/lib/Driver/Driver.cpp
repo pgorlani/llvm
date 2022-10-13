@@ -7295,8 +7295,8 @@ Action *Driver::ConstructPhaseAction(
         Input->getType() != types::TY_CUDA_DEVICE) {
       // Performing a host compilation with -fsycl.  Append the integration
       // footer to the source file.
-      auto *AppendFooter = C.MakeAction<AppendFooterJobAction>(
-          Input, Input->getType());
+      auto *AppendFooter =
+          C.MakeAction<AppendFooterJobAction>(Input, Input->getType());
       // FIXME: There are 2 issues with dependency generation in regards to
       // the integration footer that need to be addressed.
       // 1) Input file referenced on the RHS of a dependency is based on the

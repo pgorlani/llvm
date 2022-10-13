@@ -211,14 +211,14 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
 
   if (getLangOpts().SYCLIsDevice && getLangOpts().CUDA &&
-      !getLangOpts().CUDAIsDevice){
+      !getLangOpts().CUDAIsDevice) {
     // Prefer __device__ function in SYCL-device compilation of CUDA sources.
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
-   }
+  }
 
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
-      !getLangOpts().CUDAIsDevice){
+      !getLangOpts().CUDAIsDevice) {
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_HostDevice;
   }
