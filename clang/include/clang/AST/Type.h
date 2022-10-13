@@ -517,10 +517,7 @@ public:
            // to implicitly cast into the default address space.
            (A == LangAS::Default &&
             (B == LangAS::cuda_constant || B == LangAS::cuda_device ||
-             B == LangAS::cuda_shared)) ||
-           // Allow cast between Default and target specific one
-           // FIXME: this should be a TargetInfo hook
-           (A == LangAS::Default && isTargetAddressSpace(B));
+             B == LangAS::cuda_shared));
   }
 
   /// Returns true if the address space in these qualifiers is equal to or
