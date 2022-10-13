@@ -2585,8 +2585,7 @@ static TryCastResult TryAddressSpaceCast(Sema &Self, ExprResult &SrcExpr,
     // for CUDA SYCL compilation
     if (!(Self.getLangOpts().CUDA && Self.getLangOpts().SYCLIsDevice &&
           ((LangAS::Default == SrcPointeeType.getAddressSpace() &&
-            (unsigned)DestPointeeType.getAddressSpace() >=
-                (unsigned)LangAS::FirstTargetAddressSpace) ||
+            isTargetAddressSpace(DestPointeeType.getAddressSpace())) ||
            (LangAS::Default == DestPointeeType.getAddressSpace() &&
             (unsigned)SrcPointeeType.getAddressSpace() >=
                 (unsigned)LangAS::FirstTargetAddressSpace)))) {
