@@ -2587,8 +2587,7 @@ static TryCastResult TryAddressSpaceCast(Sema &Self, ExprResult &SrcExpr,
           ((LangAS::Default == SrcPointeeType.getAddressSpace() &&
             isTargetAddressSpace(DestPointeeType.getAddressSpace())) ||
            (LangAS::Default == DestPointeeType.getAddressSpace() &&
-            (unsigned)SrcPointeeType.getAddressSpace() >=
-                (unsigned)LangAS::FirstTargetAddressSpace)))) {
+            isTargetAddressSpace(SrcPointeeType.getAddressSpace()))))) {
       msg = diag::err_bad_cxx_cast_addr_space_mismatch;
       return TC_Failed;
     }
