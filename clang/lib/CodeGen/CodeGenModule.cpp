@@ -2909,6 +2909,17 @@ void CodeGenModule::EmitDeferred() {
         continue;
       }
     }
+    // Emit a dummy __host__ function if a legit one is not already present in
+    // case of SYCL compilation of CUDA sources.
+    if (LangOpts.CUDA && !LangOpts.CUDAIsDevice && LangOpts.SYCLIsDevice) {
+      GlobalDecl OtherD;
+      if (lookupRepresentativeDecl(getMangledName(D), OtherD) &&
+          (D.getCanonicalDecl().getDecl() !=
+           OtherD.getCanonicalDecl().getDecl()) &&
+          D.getCanonicalDecl().getDecl()->hasAttr<CUDAHostAttr>()) {
+        continue;
+      }
+    }
     const ValueDecl *VD = cast<ValueDecl>(D.getDecl());
     // If emitting for SYCL device, emit the deferred alias
     // as well as what it aliases.
@@ -3657,6 +3668,16 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       addDeferredDeclToEmit(GD);
       return;
     }
+
+    // Avoid emitting same __host__ __device__ function in SYCL compilation of
+    // CUDA sources.
+    if (LangOpts.SYCLIsDevice && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
+        isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>() &&
+        !Global->hasAttr<CUDADeviceAttr>()) {
+      addDeferredDeclToEmit(GD);
+      return;
+    }
+
     // Emit the definition if it can't be deferred.
     EmitGlobalDefinition(GD);
     return;
