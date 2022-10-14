@@ -3562,11 +3562,11 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       }
 
       // Do not emit __host__ only functions in SYCL device compilation.
-      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
+/*      if (LangOpts.SYCLIsDevice && isa<FunctionDecl>(Global) &&
           Global->hasAttr<CUDAHostAttr>() &&
           !Global->hasAttr<CUDADeviceAttr>()) {
         return;
-      }
+      }*/
       assert((isa<FunctionDecl>(Global) || isa<VarDecl>(Global)) &&
              "Expected Variable or Function");
     }

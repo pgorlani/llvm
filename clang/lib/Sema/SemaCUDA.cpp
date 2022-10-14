@@ -262,8 +262,10 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
       return CFP_HostDevice;
     }
 
+  // cuda device compilation in SYCL
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
       getLangOpts().CUDAIsDevice) {
+    // allow an __host__ function to call a __device__ one, in any case this will not emitted by 
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
       return CFP_SameSide;
   }
