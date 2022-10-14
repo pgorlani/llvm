@@ -217,7 +217,7 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | g  | g  |    --    |    --    | (a) |
 // | g  | h  |    --    |    --    | (e) |
 // | g  | hd |    HD    |    HD    | (c) |
-// | h  | d  |    --    |    --    | (e) |
+// | h  | d  |   --(w)  |    --    | (e) |
 // | h  | g  |    N     |    N     | (c) |
 // | h  | h  |    N     |    N     | (b) |
 // | h  | hd |    HD    |    HD    | (d) |
@@ -239,7 +239,13 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
     // (x) Prefer __device__ function in SYCL-device compilation of CUDA sources.
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
-    // (z) 
+    // (w)
+    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
+      return CFP_SameSide;
+    //
+    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Host)
+      return CFP_HostDevice;
+     // (z) 
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Global)
       return CFP_Never;
  
@@ -251,8 +257,17 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
     // (y)
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_HostDevice;
-   }
+    // 
+    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
+      return CFP_HostDevice;
+    }
 
+  if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
+      getLangOpts().CUDAIsDevice) {
+    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
+      return CFP_SameSide;
+  }
+ 
   // If one of the targets is invalid, the check always fails, no matter what
   // the other target is.
   if (CallerTarget == CFT_InvalidTarget || CalleeTarget == CFT_InvalidTarget)
