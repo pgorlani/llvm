@@ -3719,6 +3719,24 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       }
     }
 
+    // In SYCL compilation of CUDA sources
+    if (LangOpts.SYCLIsDevice && LangOpts.CUDA && !LangOpts.CUDAIsDevice) {
+      if (Global->hasAttr<CUDADeviceAttr>()) {
+        // remove already present __device__ function.
+        auto DDI = DeferredDecls.find(MangledName);
+        if (DDI != DeferredDecls.end()) {
+          DeferredDecls.erase(DDI);
+        }
+      } else if (Global->hasAttr<CUDAHostAttr>()) {
+        // do not insert a __device__ function if a __host__ one is present.
+        auto DDI = DeferredDecls.find(MangledName);
+        if (DDI != DeferredDecls.end()) {
+          return;
+        }
+      }
+    }
+
+
     // Otherwise, remember that we saw a deferred decl with this name.  The
     // first use of the mangled name will cause it to move into
     // DeferredDeclsToEmit.
