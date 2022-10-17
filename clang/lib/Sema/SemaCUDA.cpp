@@ -207,24 +207,27 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // Sh - SYCL is host
 // Sd - SYCL is device
 //
-// | F  | T  | Ph - Sd  | Pd - Sh  |  H  |
-// |----+----+----------+----------+-----+
-// | d  | d  |    N     |    N     | (c) |
-// | d  | g  |    --    |    --    | (a) |
-// | d  | h  |    --    |    --    | (e) |
-// | d  | hd |    HD    |    HD    | (b) |
-// | g  | d  |    N     |    N     | (c) |
-// | g  | g  |    --    |    --    | (a) |
-// | g  | h  |    --    |    --    | (e) |
-// | g  | hd |    HD    |    HD    | (c) |
-// | h  | d  |   --(w)  |    --    | (e) |
-// | h  | g  |    N     |    N     | (c) |
-// | h  | h  |    N     |    N     | (b) |
-// | h  | hd |    HD    |    HD    | (d) |
-// | hd | d  |    N(x)  |    HD(y) | ( ) | < diff from above
-// | hd | g  |   --(z)  |    SS    |(d/a)|
-// | hd | h  |    WS*   |    WS    | (d) | * but the __host__ function is not emitted so there is a PTX error < diff from above
-// | hd | hd |    HD    |    HD    | (b) |
+// Preference: N, SS, HD, WS, --
+//
+// |    |    |  host    |  cuda-dev  |  sycl-dev |     |
+// | F  | T  | Ph - Sh  |  Pd - Sh   |  Ph - Sd  |  H  |
+// |----+----+----------+------------+-----------+-----+
+// | d  | d  |    N     |     N      |     N     | (c) |
+// | d  | g  |    --    |     --     |     --    | (a) |
+// | d  | h  |    --    |     --     |     --    | (e) |
+// | d  | hd |    HD    |     HD     |     HD    | (b) |
+// | g  | d  |    N     |     N      |     N     | (c) |
+// | g  | g  |    --    |     --     |     --    | (a) |
+// | g  | h  |    --    |     --     |     --    | (e) |
+// | g  | hd |    HD    |     HD     |     HD    | (c) |
+// | h  | d  |    HD(q) |     WS(v)  |  +--N(w)  | ( ) |
+// | h  | g  |    N     |     N      |  |  N     | (c) |
+// | h  | h  |    N     |     N      |  +--SS(p) | ( ) |
+// | h  | hd |    HD    |     HD     |     HD(q) | ( ) |
+// | hd | d  |    HD(y) |     SS     |     N(x)  | ( ) |
+// | hd | g  |    SS    |     --     |    --(z)  |(d/a)|
+// | hd | h  |    SS    |     WS     |     WS    | (d) |
+// | hd | hd |    HD    |     HD     |     HD    | (b) |
 
 Sema::CUDAFunctionPreference
 Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
@@ -233,43 +236,44 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller);
   CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
 
-  // Sd - SYCL is device
+  // Pd - Sh -> cuda-dev in SYCL
+  if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
+      getLangOpts().CUDAIsDevice) {
+    // (v) allow an __host__ function to call a __device__ one, in any case
+    // __host__ function are not emitted by the cuda-dev compilation
+    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
+      return CFP_WrongSide;
+  }
+
+  // Ph - Sd -> sycl-dev
   if (getLangOpts().SYCLIsDevice && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
-    // (x) Prefer __device__ function in SYCL-device compilation of CUDA sources.
+    // (x) Prefer __device__ function in SYCL-device compilation of CUDA
+    // sources.
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
     // (w)
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
-      return CFP_SameSide;
-    //
+      return CFP_Native; // SameSide; I can bump up due to (p)
+    // (p)
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Host)
-      return CFP_HostDevice;
-     // (z) 
+      return CFP_SameSide; // HostDevice; I can bump up due to (w)
+    // (z)
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Global)
       return CFP_Never;
- 
-   }
+  }
 
-  // Sh - SYCL is host
+  // Ph - Sh -> host
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
     // (y)
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_HostDevice;
-    // 
+    // (q)
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
       return CFP_HostDevice;
-    }
-
-  // cuda device compilation in SYCL
-  if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
-      getLangOpts().CUDAIsDevice) {
-    // allow an __host__ function to call a __device__ one, in any case this will not emitted by 
-    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
-      return CFP_SameSide;
   }
- 
+
   // If one of the targets is invalid, the check always fails, no matter what
   // the other target is.
   if (CallerTarget == CFT_InvalidTarget || CalleeTarget == CFT_InvalidTarget)
