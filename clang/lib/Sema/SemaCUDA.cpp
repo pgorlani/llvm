@@ -207,7 +207,7 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // Sh - SYCL is host
 // Sd - SYCL is device
 //
-// Preference: N, SS, HD, WS, --
+// Priority order: N, SS, HD, WS, --
 //
 // |    |    |  host    |  cuda-dev  |  sycl-dev |     |
 // | F  | T  | Ph - Sh  |  Pd - Sh   |  Ph - Sd  |  H  |
@@ -223,10 +223,10 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | h  | d  |    HD(q) |     WS(v)  |  +--N(w)  | ( ) |
 // | h  | g  |    N     |     N      |  |  N     | (c) |
 // | h  | h  |    N     |     N      |  +--SS(p) | ( ) |
-// | h  | hd |    HD    |     HD     |     HD(q) | ( ) |
+// | h  | hd |    HD    |     HD     |     HD    | ( ) |
 // | hd | d  |    HD(y) |     SS     |     N(x)  | ( ) |
 // | hd | g  |    SS    |     --     |    --(z)  |(d/a)|
-// | hd | h  |    SS    |     WS     |     WS    | (d) |
+// | hd | h  |    SS    |     WS     |     SS    | (d) |
 // | hd | hd |    HD    |     HD     |     HD    | (b) |
 
 Sema::CUDAFunctionPreference
@@ -236,37 +236,47 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller);
   CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
 
-  // Pd - Sh -> cuda-dev in SYCL
+  // Pd - Sh -> CUDA device compilation for SYCL+CUDA
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
       getLangOpts().CUDAIsDevice) {
-    // (v) allow an __host__ function to call a __device__ one, in any case
-    // __host__ function are not emitted by the cuda-dev compilation
+    // (v) allows a __host__ function to call a __device__ one. This is allowed
+    // for sycl-device compilation, since a regular function (implicitly
+    // __host__) called by a SYCL kernel could end up calling a __device__ one.
+    // In any case, __host__ functions are not emitted by the cuda-dev
+    // compilation. So, this doesn't introduce any error.
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
       return CFP_WrongSide;
   }
 
-  // Ph - Sd -> sycl-dev
+  // Ph - Sd -> SYCL device compilation for SYCL+CUDA
   if (getLangOpts().SYCLIsDevice && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
-    // (x) Prefer __device__ function in SYCL-device compilation of CUDA
-    // sources.
+    // (x), (w) and (p) Prefer __device__ function in SYCL-device compilation of
+    // CUDA sources. (x)
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_Native;
     // (w)
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
-      return CFP_Native; // SameSide; I can bump up due to (p)
-    // (p)
+      return CFP_Native;
+    // (p) this is like (d) but for CFT_HostDevice
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Host)
-      return CFP_SameSide; // HostDevice; I can bump up due to (w)
+      return CFP_SameSide;
+
     // (z)
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Global)
       return CFP_Never;
   }
 
-  // Ph - Sh -> host
+  // Ph - Sh -> host compilation for SYCL+CUDA
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
-    // (y)
+    // (y) and (q) allow __host__ and host device function to call a __device__
+    // one. This could happen, if a __device__ function is defined without
+    // having a corresponding __host__. In this case, a dummy __host__ function
+    // is generated. This dummy function is required since the lambda that forms
+    // the SYCL kernel (having host device attr.) needs to be compiled also for
+    // the host. (q) is added in case a regular function (implicitly __host__)
+    // is called by a SYCL kernel lambda. (y)
     if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
       return CFP_HostDevice;
     // (q)
