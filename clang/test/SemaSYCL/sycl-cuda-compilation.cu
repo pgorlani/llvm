@@ -24,7 +24,7 @@ __device__ void dev_fn_0() {
   host_fn_0();
 // expected-error@-1 {{no matching function for call to 'host_fn_0'}}
 }
-#if 0
+
 // (B)
 __host__ void host_fn_1() {}
 // expected-note@-1 {{candidate function not viable: call to __host__ function from __global__ function}}
@@ -58,5 +58,4 @@ __global__ void kernel_4() {}
 __host__ __device__ void hostdevice_func() { kernel_4<<<1, 1>>>();} //
 // expected-error@-1 {{reference to __global__ function 'kernel_4' in __host__ __device__ function}}
 void func_4(void) { hostdevice_func(); }
-#endif
 #endif
