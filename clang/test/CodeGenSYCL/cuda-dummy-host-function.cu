@@ -6,11 +6,11 @@
 #include "Inputs/sycl.hpp"
 
 // CHECK: ret i32 2
-__attribute__((sycl_device)) __device__ int fun0() { return 1; }
-__attribute__((sycl_device)) __host__ int fun0() { return 2; }
+__device__ int fun0() { return 1; }
+__host__ int fun0() { return 2; }
 
 // CHECK: ret i32 3
-__attribute__((sycl_device)) __host__ __device__ int fun1() { return 3; }
+__host__ __device__ int fun1() { return 3; }
 
 // CHECK: ret i32 undef
-__attribute__((sycl_device)) __device__ int fun2() { return 4; }
+__device__ int fun2() { return 4; }
