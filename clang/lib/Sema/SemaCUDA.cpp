@@ -220,9 +220,9 @@ Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
 // | g  | g  |    --    |     --     |     --    | (a) |
 // | g  | h  |    --    |     --     |     --    | (e) |
 // | g  | hd |    HD    |     HD     |     HD    | (c) |
-// | h  | d  |    HD(q) |     WS(v)  |  +--N(w)  | ( ) |
-// | h  | g  |    N     |     N      |  |  N     | (c) |
-// | h  | h  |    N     |     N      |  +--SS(p) | ( ) |
+// | h  | d  |    HD(y) |     WS(v)  |     N(x)  | ( ) |
+// | h  | g  |    N     |     N      |     N     | (c) |
+// | h  | h  |    N     |     N      |     SS(p) | ( ) |
 // | h  | hd |    HD    |     HD     |     HD    | ( ) |
 // | hd | d  |    HD(y) |     SS     |     N(x)  | ( ) |
 // | hd | g  |    SS    |     --     |    --(z)  |(d/a)|
@@ -251,14 +251,13 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   // Ph - Sd -> SYCL device compilation for SYCL+CUDA
   if (getLangOpts().SYCLIsDevice && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
-    // (x), (w) and (p) Prefer __device__ function in SYCL-device compilation of
-    // CUDA sources. (x)
-    if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
+    // (x), and (p) prefer __device__ function in SYCL-device compilation.
+    // (x) allows to pick a __device__ function.
+    if ((CallerTarget == CFT_Host || CallerTarget == CFT_HostDevice) &&
+        CalleeTarget == CFT_Device)
       return CFP_Native;
-    // (w)
-    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
-      return CFP_Native;
-    // (p) this is like (d) but for CFT_HostDevice
+    // (p) lowers the preference of __host__ functions for favoring __device__
+    // ones.
     if (CallerTarget == CFT_Host && CalleeTarget == CFT_Host)
       return CFP_SameSide;
 
@@ -270,17 +269,15 @@ Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
   // Ph - Sh -> host compilation for SYCL+CUDA
   if (getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
       !getLangOpts().CUDAIsDevice) {
-    // (y) and (q) allow __host__ and host device function to call a __device__
-    // one. This could happen, if a __device__ function is defined without
-    // having a corresponding __host__. In this case, a dummy __host__ function
-    // is generated. This dummy function is required since the lambda that forms
-    // the SYCL kernel (having host device attr.) needs to be compiled also for
-    // the host. (q) is added in case a regular function (implicitly __host__)
-    // is called by a SYCL kernel lambda. (y)
-    if (CallerTarget == CFT_HostDevice && CalleeTarget == CFT_Device)
-      return CFP_HostDevice;
-    // (q)
-    if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
+    // (y) allows __host__ and __host__ __device__ functions to call a
+    // __device__ one. This could happen, if a __device__ function is defined
+    // without having a corresponding __host__. In this case, a dummy __host__
+    // function is generated. This dummy function is required since the lambda
+    // that forms the SYCL kernel (having host device attr.) needs to be
+    // compiled also for the host. (CallerTarget == CFT_Host) is added in case a
+    // regular function (implicitly __host__) is called by a SYCL kernel lambda.
+    if ((CallerTarget == CFT_Host || CallerTarget == CFT_HostDevice) &&
+        CalleeTarget == CFT_Device)
       return CFP_HostDevice;
   }
 
