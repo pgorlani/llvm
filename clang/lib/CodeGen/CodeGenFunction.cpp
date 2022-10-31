@@ -1659,6 +1659,18 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
       Builder.CreateRet(llvm::UndefValue::get(Fn->getReturnType()));
     return;
   }
+  // Generate a dummy __device__ function for compiling CUDA sources in SYCL.
+  if (getLangOpts().CUDA && !getLangOpts().CUDAIsDevice &&
+      getLangOpts().SYCLIsDevice && !FD->hasAttr<CUDADeviceAttr>() &&
+      FD->hasAttr<CUDAHostAttr>()) {
+    Fn->setLinkage(llvm::Function::WeakODRLinkage);
+    if (FD->getReturnType()->isVoidType())
+      Builder.CreateRetVoid();
+    else
+      Builder.CreateRet(llvm::UndefValue::get(Fn->getReturnType()));
+    return;
+  }
+
   // When compiling a CUDA file in SYCL device mode,
   // set weak ODR linkage for possibly duplicated __device__ functions.
   if (getLangOpts().CUDA && !getLangOpts().CUDAIsDevice &&
