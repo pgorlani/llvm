@@ -1,27 +1,53 @@
 // RUN: %clang_cc1 -fsycl-is-host -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-HOST
 // RUN: %clang_cc1 -fsycl-is-device -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-DEV
 
-// Test if a dummy __host__ function (returning undef) is generated for every __device__ function without a host counterpart in sycl-host compilation.
+// This tests
+// - if a dummy __host__ function (returning undef) is generated for every
+//   __device__ function without a host counterpart in sycl-host compilation;
+// - if __host__ or __device__  functions are generated correctly depending
+//   on the compilation;
+// - if __host__ and __device__ functions in sycl-device compilation are
+//   generated with weak_odr linkage for avoiding multiple declaration of
+//   the same function due to the cuda-device compilation.
 
 #include "../CodeGenCUDA/Inputs/cuda.h"
 #include "Inputs/sycl.hpp"
 
-// CHECK-HOST: ret i32 2
-// CHECK-DEV: ret i32 1
 __device__ int fun0() { return 1; }
 __host__ int fun0() { return 2; }
 
-// CHECK-HOST: ret i32 3
-// CHECK-DEV: ret i32 3
+// CHECK-HOST: define dso_local noundef i32 @_Z4fun0v()
+// CHECK-HOST: ret i32 2
+
+// CHECK-DEV: define weak_odr noundef i32 @_Z4fun0v()
+// CHECK-DEV: ret i32 1
+
+
 __host__ __device__ int fun1() { return 3; }
 
-// CHECK-HOST: ret i32 4
-// CHECK-DEV: ret i32 4
+// CHECK-HOST: define dso_local noundef i32 @_Z4fun1v()
+// CHECK-HOST: ret i32 3
+
+// CHECK-DEV: define weak_odr noundef i32 @_Z4fun1v()
+// CHECK-DEV: ret i32 3
+
+
 __host__ int fun2() { return 4; }
 
-// CHECK-HOST: ret i32 undef
-// CHECK-DEV: ret i32 5
+// CHECK-HOST: define dso_local noundef i32 @_Z4fun2v()
+// CHECK-HOST: ret i32 4
+
+// CHECK-DEV: define weak_odr noundef i32 @_Z4fun2v()
+// CHECK-DEV: ret i32 4
+
+
 __device__ int fun3() { return 5; }
+
+// CHECK-HOST: define weak_odr noundef i32 @_Z4fun3v()
+// CHECK-HOST: ret i32 undef
+
+// CHECK-DEV: define weak_odr noundef i32 @_Z4fun3v()
+// CHECK-DEV: ret i32 5
 
 int main(){
 
