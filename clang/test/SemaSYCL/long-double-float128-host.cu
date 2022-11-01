@@ -12,3 +12,4 @@ int main() {
   foo_1(1.0);
   return 0;
 }
+// expected-no-diagnostics
