@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-linux-gnu -fsycl-is-host -internal-isystem %S/Inputs -sycl-std=2020 -fsyntax-only %s
-// RUN: %clang_cc1 -triple x86_64-linux-gnu -fsycl-is-device -internal-isystem %S/Inputs -sycl-std=2020 -fsyntax-only %s
-// RUN: %clang_cc1 -triple x86_64-linux-gnu -fsycl-is-host -fcuda-is-device -internal-isystem %S/Inputs -sycl-std=2020 -fsyntax-only %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -fsycl-is-host -internal-isystem %S/Inputs -sycl-std=2020 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -fsycl-is-device -internal-isystem %S/Inputs -sycl-std=2020 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -fsycl-is-host -fcuda-is-device -internal-isystem %S/Inputs -sycl-std=2020 -fsyntax-only -verify %s
 
 // Test long double and __float128 support for host. 
 
