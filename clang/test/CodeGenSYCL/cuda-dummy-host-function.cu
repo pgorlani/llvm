@@ -13,6 +13,7 @@
 #include "../CodeGenCUDA/Inputs/cuda.h"
 #include "Inputs/sycl.hpp"
 
+
 __device__ int fun0() { return 1; }
 __host__ int fun0() { return 2; }
 
@@ -40,6 +41,14 @@ __host__ int fun2() { return 4; }
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun2v()
 // CHECK-DEV: ret i32 4
 
+__device__ int fun5();
+__host__ int fun5() { return 7; }
+
+// CHECK-HOST: define dso_local noundef i32 @_Z4fun5v()
+// CHECK-HOST: ret i32 7
+
+// CHECK-DEV: define weak_odr noundef i32 @_Z4fun5v()
+// CHECK-DEV: ret i32 7
 
 __device__ int fun3() { return 5; }
 
@@ -48,6 +57,16 @@ __device__ int fun3() { return 5; }
 
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun3v()
 // CHECK-DEV: ret i32 5
+
+__device__ int fun4() { return 6; }
+__host__ int fun4();
+
+// CHECK-HOST: define weak_odr noundef i32 @_Z4fun4v() 
+// CHECK-HOST: ret i32 undef
+
+// CHECK-DEV: define weak_odr noundef i32 @_Z4fun4v()
+// CHECK-DEV: ret i32 6
+
 
 int main(){
 
@@ -58,7 +77,9 @@ int main(){
       fun0();
       fun1();
       fun2();
+      fun5();
       fun3();
+      fun4();
     });
   });
 
