@@ -2899,7 +2899,7 @@ void CodeGenModule::EmitDeferred() {
 
   for (GlobalDecl &D : CurDeclsToEmit) {
     // Emit a dummy __host__ function if a legit one is not already present in
-    // case of SYCL compilation of CUDA sources.
+    // case of SYCL host-compilation of CUDA sources.
     if (LangOpts.CUDA && !LangOpts.CUDAIsDevice && LangOpts.SYCLIsHost) {
       GlobalDecl OtherD;
       if (lookupRepresentativeDecl(getMangledName(D), OtherD) &&
@@ -2909,17 +2909,7 @@ void CodeGenModule::EmitDeferred() {
         continue;
       }
     }
-    // Emit a dummy __host__ function if a legit one is not already present in
-    // case of SYCL compilation of CUDA sources.
-    if (LangOpts.CUDA && !LangOpts.CUDAIsDevice && LangOpts.SYCLIsDevice) {
-      GlobalDecl OtherD;
-      if (lookupRepresentativeDecl(getMangledName(D), OtherD) &&
-          (D.getCanonicalDecl().getDecl() !=
-           OtherD.getCanonicalDecl().getDecl()) &&
-          D.getCanonicalDecl().getDecl()->hasAttr<CUDAHostAttr>()) {
-        continue;
-      }
-    }
+
     const ValueDecl *VD = cast<ValueDecl>(D.getDecl());
     // If emitting for SYCL device, emit the deferred alias
     // as well as what it aliases.
@@ -3654,21 +3644,13 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // to benefit from cache locality.
   if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
     // Avoid emitting same __host__ __device__ functions,
-    // in SYCL-CUDA-host compilation, and
+    // in SYCL-CUDA-host compilation
     if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
         isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
         Global->hasAttr<CUDADeviceAttr>()) {
       addDeferredDeclToEmit(GD);
       return;
     }
-    // in SYCL-CUDA-device compilation
-    if (LangOpts.SYCLIsDevice && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
-        isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>() &&
-        !Global->hasAttr<CUDADeviceAttr>()) {
-      addDeferredDeclToEmit(GD);
-      return;
-    }
-
     // Emit the definition if it can't be deferred.
     EmitGlobalDefinition(GD);
     return;
