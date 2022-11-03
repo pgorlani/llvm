@@ -3587,8 +3587,10 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     if (!FD->doesThisDeclarationHaveABody()) {
       if (!FD->doesDeclarationForceExternallyVisibleDefinition()) {
         // Force the declaration in SYCL compilation of CUDA sources.
-        if (!(LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
-               Global->hasAttr<CUDAHostAttr>()))
+        if (!((LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
+               Global->hasAttr<CUDAHostAttr>()) ||
+              (LangOpts.SYCLIsDevice && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
+               Global->hasAttr<CUDADeviceAttr>())) )
           return;
       }
 
