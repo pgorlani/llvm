@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsycl-is-host -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-HOST
-// RUN: %clang_cc1 -fsycl-is-device -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-DEV
+// RUN: %clang_cc1 -fsycl-is-host -internal-isystem %S/Inputs -sycl-std=2020 -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-HOST
+// RUN: %clang_cc1 -fsycl-is-device -internal-isystem %S/Inputs -sycl-std=2020 -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-DEV
 
 // This tests
 // - if a dummy __host__ function (returning undef) is generated for every
@@ -11,7 +11,7 @@
 //   the same function due to the cuda-device compilation.
 
 #include "../CodeGenCUDA/Inputs/cuda.h"
-#include "Inputs/sycl.hpp"
+#include "sycl.hpp"
 
 
 __device__ int fun0() { return 1; }
@@ -41,14 +41,22 @@ __host__ int fun2() { return 4; }
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun2v()
 // CHECK-DEV: ret i32 4
 
-__device__ int fun5();
 __host__ int fun5() { return 7; }
+__device__ int fun5();
 
 // CHECK-HOST: define dso_local noundef i32 @_Z4fun5v()
 // CHECK-HOST: ret i32 7
 
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun5v()
 // CHECK-DEV: ret i32 7
+
+__device__ int fun4() { return 6; }
+__host__ int fun4();
+
+// CHECK-HOST: declare noundef i32 @_Z4fun4v()
+
+// CHECK-DEV: define weak_odr noundef i32 @_Z4fun4v()
+// CHECK-DEV: ret i32 6
 
 __device__ int fun3() { return 5; }
 
@@ -57,15 +65,6 @@ __device__ int fun3() { return 5; }
 
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun3v()
 // CHECK-DEV: ret i32 5
-
-__device__ int fun4() { return 6; }
-__host__ int fun4();
-
-// CHECK-HOST: define weak_odr noundef i32 @_Z4fun4v() 
-// CHECK-HOST: ret i32 undef
-
-// CHECK-DEV: define weak_odr noundef i32 @_Z4fun4v()
-// CHECK-DEV: ret i32 6
 
 
 int main(){
