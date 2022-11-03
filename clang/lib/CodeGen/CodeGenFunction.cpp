@@ -1652,7 +1652,6 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   if (getLangOpts().CUDA && !getLangOpts().CUDAIsDevice &&
       getLangOpts().SYCLIsHost && !FD->hasAttr<CUDAHostAttr>() &&
       FD->hasAttr<CUDADeviceAttr>()) {
-    Fn->setLinkage(llvm::Function::WeakODRLinkage);
     if (FD->getReturnType()->isVoidType())
       Builder.CreateRetVoid();
     else

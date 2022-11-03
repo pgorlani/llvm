@@ -60,7 +60,7 @@ __host__ int fun4();
 
 __device__ int fun3() { return 5; }
 
-// CHECK-HOST: define weak_odr noundef i32 @_Z4fun3v()
+// CHECK-HOST: define dso_local noundef i32 @_Z4fun3v()
 // CHECK-HOST: ret i32 undef
 
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun3v()
