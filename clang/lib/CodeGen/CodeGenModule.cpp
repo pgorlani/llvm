@@ -4449,7 +4449,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     // __device__/__host__ attributes do not match.
     auto DDI = DeferredDecls.find(MangledName);
     if (DDI != DeferredDecls.end() &&
-        ((getLangOpts().SYCLIsHost && getLangOpts().CUDA &&
+        ((getLangOpts().isSYCL()/*SYCLIsHost*/ && getLangOpts().CUDA &&
           !getLangOpts().CUDAIsDevice)
              ? (DDI->second).getDecl()->hasAttr<CUDAHostAttr>() ==
                        D->hasAttr<CUDAHostAttr>() &&

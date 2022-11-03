@@ -13,6 +13,13 @@
 #include "../CodeGenCUDA/Inputs/cuda.h"
 #include "sycl.hpp"
 
+__host__ int fun5() { return 7; }
+__device__ int fun5();
+
+// CHECK-HOST: define dso_local noundef i32 @_Z4fun5v()
+// CHECK-HOST: ret i32 7
+
+// CHECK-DEV: declare noundef i32 @_Z4fun5v()
 
 __device__ int fun0() { return 1; }
 __host__ int fun0() { return 2; }
@@ -23,7 +30,6 @@ __host__ int fun0() { return 2; }
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun0v()
 // CHECK-DEV: ret i32 1
 
-
 __host__ __device__ int fun1() { return 3; }
 
 // CHECK-HOST: define dso_local noundef i32 @_Z4fun1v()
@@ -32,7 +38,6 @@ __host__ __device__ int fun1() { return 3; }
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun1v()
 // CHECK-DEV: ret i32 3
 
-
 __host__ int fun2() { return 4; }
 
 // CHECK-HOST: define dso_local noundef i32 @_Z4fun2v()
@@ -40,15 +45,6 @@ __host__ int fun2() { return 4; }
 
 // CHECK-DEV: define weak_odr noundef i32 @_Z4fun2v()
 // CHECK-DEV: ret i32 4
-
-__host__ int fun5() { return 7; }
-__device__ int fun5();
-
-// CHECK-HOST: define dso_local noundef i32 @_Z4fun5v()
-// CHECK-HOST: ret i32 7
-
-// CHECK-DEV: define weak_odr noundef i32 @_Z4fun5v()
-// CHECK-DEV: ret i32 7
 
 __device__ int fun4() { return 6; }
 __host__ int fun4();
@@ -73,12 +69,12 @@ int main(){
 
   deviceQueue.submit([&](sycl::handler &h) {
     h.single_task<class kern>([]() {
+      fun5();
       fun0();
       fun1();
       fun2();
-      fun5();
-      fun3();
       fun4();
+      fun3();
     });
   });
 
