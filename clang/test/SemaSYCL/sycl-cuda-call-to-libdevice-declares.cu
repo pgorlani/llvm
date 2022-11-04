@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsycl-is-device -internal-isystem %S/Inputs -sycl-std=2020 -verify -fsyntax-only %s
+// RUN: %clang_cc1 -fsycl-is-device -internal-isystem %S/Inputs \
+// RUN:   -sycl-std=2020 -verify -fsyntax-only %s
 
 // This test checks whether we diagnose cases of unmarked, undefined
 // __device__ functions called on device from either kernels or sycl

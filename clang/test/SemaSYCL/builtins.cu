@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -triple nvptx64-nvidia-cuda -aux-triple x86_64-unknown-linux-gnu \
-// RUN:     -fsycl-is-device -internal-isystem %S/Inputs -sycl-std=2020 \
-// RUN:     -ast-dump %s | FileCheck %s
+// RUN: %clang_cc1 \
+// RUN:   -triple nvptx64-nvidia-cuda -aux-triple x86_64-unknown-linux-gnu \
+// RUN:   -fsycl-is-device -sycl-std=2020 -ast-dump %s | FileCheck %s
 
 // Check that aux builtins have the correct __device__ attribute
 
