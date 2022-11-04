@@ -1,9 +1,15 @@
-// RUN: %clang_cc1 %s -fsycl-is-host -x cuda -D__sycl_cuda_host -fsycl-targets=nvptx64-nvidia-cuda -triple x86_64-unknown-linux -emit-llvm -o - \
-// RUN:   -verify -verify-ignore-unexpected=note
-// RUN: %clang_cc1 %s -fsycl-is-host -fcuda-is-device -x cuda -D__cuda_device -fsycl-targets=nvptx64-nvidia-cuda -triple x86_64-unknown-linux -emit-llvm -o - \
-// RUN:   -verify -verify-ignore-unexpected=note
-// RUN: %clang_cc1 %s -fsycl-is-device -x cuda -D__sycl_device -fsycl-targets=nvptx64-nvidia-cuda -triple x86_64-unknown-linux -emit-llvm -o - \
-// RUN:   -verify -verify-ignore-unexpected=note
+// RUN: %clang_cc1 %s -fsycl-is-host -D__sycl_cuda_host \
+// RUN:   -internal-isystem %S/../SemaCUDA/Inputs \
+// RUN:   -fsycl-targets=nvptx64-nvidia-cuda -triple x86_64-unknown-linux \
+// RUN:   -emit-llvm -o - -verify -verify-ignore-unexpected=note
+// RUN: %clang_cc1 %s -fsycl-is-host -fcuda-is-device -D__cuda_device \
+// RUN:   -internal-isystem %S/../SemaCUDA/Inputs \
+// RUN:   -fsycl-targets=nvptx64-nvidia-cuda -triple x86_64-unknown-linux \
+// RUN:   -emit-llvm -o - -verify -verify-ignore-unexpected=note
+// RUN: %clang_cc1 %s -fsycl-is-device -D__sycl_device \
+// RUN:   -internal-isystem %S/../SemaCUDA/Inputs \
+// RUN:   -fsycl-targets=nvptx64-nvidia-cuda -triple x86_64-unknown-linux\
+// RUN:   -emit-llvm -o - -verify -verify-ignore-unexpected=note
 
 // This tests the errors emitted by SEMA in case of SYCL-CUDA compilation.
 
@@ -15,7 +21,7 @@
 // | d  | g  | (D) |
 // | hd | g  | (E) |
 
-#include "../SemaCUDA/Inputs/cuda.h"
+#include "cuda.h"
 
 // (A)
 __host__ void host_fn_0() {}
