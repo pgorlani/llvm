@@ -120,4 +120,3 @@
 // DEFAULT-PHASES2:    |  +- 86: file-table-tform, {80, 85}, tempfiletable, (device-sycl, sm_80)
 // DEFAULT-PHASES2:    |- 87: clang-offload-wrapper, {86}, object, (device-sycl, sm_80)
 // DEFAULT-PHASES2:    88: offload, "host-cuda-sycl (x86_64-unknown-linux-gnu)" {20}, "device-sycl (nvptx64-nvidia-cuda:sm_80)" {87}, image
-

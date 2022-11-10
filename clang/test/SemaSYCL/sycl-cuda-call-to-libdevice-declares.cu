@@ -4,7 +4,7 @@
 // This test checks whether we diagnose cases of unmarked, undefined
 // __device__ functions called on device from either kernels or sycl
 // device functions. This is needed because libdevice functions are
-// declared but not defined in `__clang_cuda_libdevice_declares.h`. 
+// declared but not defined in `__clang_cuda_libdevice_declares.h`.
 
 #include "sycl.hpp"
 

@@ -3659,7 +3659,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // function. If the global must always be emitted, do it eagerly if possible
   // to benefit from cache locality.
   if (MustBeEmitted(Global) && MayBeEmittedEagerly(Global)) {
-    // Avoid emitting same __host__ __device__ functions,
+    // Avoid emitting the same __host__ __device__ functions,
     // in SYCL-CUDA-host compilation, and
     if (LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
         isa<FunctionDecl>(Global) && !Global->hasAttr<CUDAHostAttr>() &&
@@ -3667,7 +3667,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       addDeferredDeclToEmit(GD);
       return;
     }
-    // in SYCL-CUDA-device compilation
+    // in SYCL-CUDA-device compilation.
     if (LangOpts.SYCLIsDevice && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
         isa<FunctionDecl>(Global) && Global->hasAttr<CUDAHostAttr>() &&
         !Global->hasAttr<CUDADeviceAttr>()) {

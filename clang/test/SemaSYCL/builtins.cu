@@ -13,7 +13,7 @@ void fun() {
 }
 
 // CHECK: FunctionDecl {{.*}} __nvvm_read_ptx_sreg_ctaid_x
-// CHECK-NEXT: BuiltinAttr 
+// CHECK-NEXT: BuiltinAttr
 // CHECK-NEXT: NoThrowAttr
 // CHECK-NEXT: ConstAttr
 // CHECK-NEXT: CUDADeviceAttr
