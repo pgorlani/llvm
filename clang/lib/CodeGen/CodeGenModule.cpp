@@ -3599,8 +3599,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
         // Force the declaration in SYCL compilation of CUDA sources.
         if (!((LangOpts.SYCLIsHost && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
                Global->hasAttr<CUDAHostAttr>()) ||
-              (LangOpts.SYCLIsDevice && LangOpts.CUDA && !LangOpts.CUDAIsDevice &&
-               Global->hasAttr<CUDADeviceAttr>())) )
+              (LangOpts.SYCLIsDevice && LangOpts.CUDA &&
+               !LangOpts.CUDAIsDevice && Global->hasAttr<CUDADeviceAttr>())))
           return;
       }
 
@@ -4449,7 +4449,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     // __device__/__host__ attributes do not match.
     auto DDI = DeferredDecls.find(MangledName);
     if (DDI != DeferredDecls.end() &&
-        ((getLangOpts().isSYCL()/*SYCLIsHost*/ && getLangOpts().CUDA &&
+        ((getLangOpts().isSYCL() && getLangOpts().CUDA &&
           !getLangOpts().CUDAIsDevice)
              ? (DDI->second).getDecl()->hasAttr<CUDAHostAttr>() ==
                        D->hasAttr<CUDAHostAttr>() &&
