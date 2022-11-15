@@ -62,6 +62,15 @@ public:
   range() = delete;
 
 // OP is: +, -, *, /, %, <<, >>, &, |, ^, &&, ||, <, >, <=, >=
+#ifdef __NVPTX__
+#define __SYCL_GEN_OPT_BASE(op)                                                \
+  friend range<dimensions> operator op(const range<dimensions> &lhs,           \
+                                       const range<dimensions> &rhs) {         \
+    range<dimensions> result(lhs);                                             \
+    result.common_array = lhs.common_array op rhs.common_array;              \
+    return result;                                                             \
+  }
+#else
 #define __SYCL_GEN_OPT_BASE(op)                                                \
   friend range<dimensions> operator op(const range<dimensions> &lhs,           \
                                        const range<dimensions> &rhs) {         \
@@ -71,7 +80,44 @@ public:
     }                                                                          \
     return result;                                                             \
   }
+#endif //__NVPTX__
 
+#ifdef __NVPTX__
+#ifndef __SYCL_DISABLE_ID_TO_INT_CONV__
+  // Enable operators with integral types only
+#define __SYCL_GEN_OPT(op)                                                     \
+  __SYCL_GEN_OPT_BASE(op)                                                      \
+  template <typename T>                                                        \
+  friend IntegralType<T, range<dimensions>> operator op(                       \
+      const range<dimensions> &lhs, const T &rhs) {                            \
+    range<dimensions> result(lhs);                                             \
+    result.common_array = lhs.common_array op rhs;                             \
+    return result;                                                             \
+  }                                                                            \
+  template <typename T>                                                        \
+  friend IntegralType<T, range<dimensions>> operator op(                       \
+      const T &lhs, const range<dimensions> &rhs) {                            \
+    range<dimensions> result(rhs);                                             \
+    result.common_array = lhs op rhs.common_array;                     \
+    return result;                                                             \
+  }
+#else 
+#define __SYCL_GEN_OPT(op)                                                     \
+  __SYCL_GEN_OPT_BASE(op)                                                      \
+  friend range<dimensions> operator op(const range<dimensions> &lhs,           \
+                                       const size_t &rhs) {                    \
+    range<dimensions> result(lhs);                                             \
+    result.common_array = lhs.common_array op rhs;                     \
+    return result;                                                             \
+  }                                                                            \
+  friend range<dimensions> operator op(const size_t &lhs,                      \
+                                       const range<dimensions> &rhs) {         \
+    range<dimensions> result(rhs);                                             \
+    result.common_array = lhs op rhs.common_array;                     \
+    return result;                                                             \
+  }
+#endif // __SYCL_DISABLE_ID_TO_INT_CONV__
+#else //__NVPTX__
 #ifndef __SYCL_DISABLE_ID_TO_INT_CONV__
   // Enable operators with integral types only
 #define __SYCL_GEN_OPT(op)                                                     \
@@ -114,6 +160,7 @@ public:
     return result;                                                             \
   }
 #endif // __SYCL_DISABLE_ID_TO_INT_CONV__
+#endif //__NVPTX__
 
   __SYCL_GEN_OPT(+)
   __SYCL_GEN_OPT(-)
@@ -136,6 +183,19 @@ public:
 #undef __SYCL_GEN_OPT_BASE
 
 // OP is: +=, -=, *=, /=, %=, <<=, >>=, &=, |=, ^=
+#ifdef __NVPTX__
+#define __SYCL_GEN_OPT(op)                                                     \
+  friend range<dimensions> &operator op(range<dimensions> &lhs,                \
+                                        const range<dimensions> &rhs) {        \
+    lhs.common_array op rhs;                                           \
+    return lhs;                                                                \
+  }                                                                            \
+  friend range<dimensions> &operator op(range<dimensions> &lhs,                \
+                                        const size_t &rhs) {                   \
+    lhs.common_array op rhs;                                              \
+    return lhs;                                                                \
+  }
+#else
 #define __SYCL_GEN_OPT(op)                                                     \
   friend range<dimensions> &operator op(range<dimensions> &lhs,                \
                                         const range<dimensions> &rhs) {        \
@@ -151,6 +211,7 @@ public:
     }                                                                          \
     return lhs;                                                                \
   }
+#endif //__NVPTX__
 
   __SYCL_GEN_OPT(+=)
   __SYCL_GEN_OPT(-=)
@@ -166,6 +227,14 @@ public:
 #undef __SYCL_GEN_OPT
 
 // OP is unary +, -
+#ifdef __NVPTX__
+#define __SYCL_GEN_OPT(op)                                                     \
+  friend range<dimensions> operator op(const range<dimensions> &rhs) {         \
+    range<dimensions> result(rhs);                                             \
+    result.common_array = (op rhs.common_array);                       \
+    return result;                                                             \
+  }
+#else 
 #define __SYCL_GEN_OPT(op)                                                     \
   friend range<dimensions> operator op(const range<dimensions> &rhs) {         \
     range<dimensions> result(rhs);                                             \
@@ -174,6 +243,7 @@ public:
     }                                                                          \
     return result;                                                             \
   }
+#endif //__NVPTX__ 
 
   __SYCL_GEN_OPT(+)
   __SYCL_GEN_OPT(-)
@@ -181,6 +251,13 @@ public:
 #undef __SYCL_GEN_OPT
 
 // OP is prefix ++, --
+#ifdef __NVPTX__
+#define __SYCL_GEN_OPT(op)                                                     \
+  friend range<dimensions> &operator op(range<dimensions> &rhs) {              \
+    op rhs.common_array;                                                       \
+    return rhs;                                                                \
+  }
+#else
 #define __SYCL_GEN_OPT(op)                                                     \
   friend range<dimensions> &operator op(range<dimensions> &rhs) {              \
     for (int i = 0; i < dimensions; ++i) {                                     \
@@ -188,6 +265,7 @@ public:
     }                                                                          \
     return rhs;                                                                \
   }
+#endif //__NVPTX__
 
   __SYCL_GEN_OPT(++)
   __SYCL_GEN_OPT(--)
@@ -195,6 +273,14 @@ public:
 #undef __SYCL_GEN_OPT
 
 // OP is postfix ++, --
+#ifdef __NVPTX__
+#define __SYCL_GEN_OPT(op)                                                     \
+  friend range<dimensions> operator op(range<dimensions> &lhs, int) {          \
+    range<dimensions> old_lhs(lhs);                                            \
+      op lhs.common_array;                                                  \
+    return old_lhs;                                                            \
+  }
+#else
 #define __SYCL_GEN_OPT(op)                                                     \
   friend range<dimensions> operator op(range<dimensions> &lhs, int) {          \
     range<dimensions> old_lhs(lhs);                                            \
@@ -203,6 +289,7 @@ public:
     }                                                                          \
     return old_lhs;                                                            \
   }
+#endif //__NVPTX__
 
   __SYCL_GEN_OPT(++)
   __SYCL_GEN_OPT(--)
