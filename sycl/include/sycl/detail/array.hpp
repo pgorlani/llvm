@@ -66,17 +66,32 @@ public:
 
   size_t get(int dimension) const {
     check_dimension(dimension);
-    return common_array[dimension];
+    if (dimensions > 3)
+      return common_array[dimension];
+    else
+      return ((dimension == 0)
+                  ? common_array[0]
+                  : ((dimension == 1) ? common_array[1] : common_array[2]));
   }
 
   size_t &operator[](int dimension) {
     check_dimension(dimension);
-    return common_array[dimension];
+    if (dimensions > 3)
+      return common_array[dimension];
+    else
+      return ((dimension == 0)
+                  ? common_array[0]
+                  : ((dimension == 1) ? common_array[1] : common_array[2]));
   }
 
   size_t operator[](int dimension) const {
     check_dimension(dimension);
-    return common_array[dimension];
+    if (dimensions > 3)
+      return common_array[dimension];
+    else
+      return ((dimension == 0)
+                  ? common_array[0]
+                  : ((dimension == 1) ? common_array[1] : common_array[2]));
   }
 
   array(const array<dimensions> &rhs) = default;
